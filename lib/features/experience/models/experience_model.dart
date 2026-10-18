@@ -4,7 +4,7 @@
 /// disponible para los asistentes móviles.
 class ExperienceModel {
   /// Identificador único de la experiencia.
-  final int id;
+  final String id;
 
   /// Título descriptivo de la experiencia.
   final String title;
@@ -92,7 +92,7 @@ class ExperienceModel {
   /// Construye una instancia de [ExperienceModel] a partir de un mapa JSON.
   factory ExperienceModel.fromJson(Map<String, dynamic> json) {
     return ExperienceModel(
-      id: json['id'] as int? ?? 0,
+      id: (json['id'] ?? '').toString(),
       title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
       coverImageUrl: json['cover_image_url'] as String?,

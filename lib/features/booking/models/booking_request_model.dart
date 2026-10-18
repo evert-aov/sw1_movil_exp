@@ -3,8 +3,8 @@
 /// Separado en su propio archivo siguiendo el principio de responsabilidad única
 /// para encapsular los datos de checkout del asistente móvil.
 class BookingRequestModel {
-  /// Identificador de la experiencia que se desea reservar.
-  final int experienceId;
+  /// Identificador de la experiencia que se desea reservar (UUID).
+  final String experienceId;
 
   /// Cantidad de plazas solicitadas por el asistente.
   final int quantity;

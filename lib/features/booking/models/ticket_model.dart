@@ -4,7 +4,7 @@
 /// del asistente móvil.
 class TicketModel {
   /// Identificador único del ticket.
-  final int id;
+  final String id;
 
   /// Código alfanumérico legible de la entrada (ej. EXP-2026-4812).
   final String ticketCode;
@@ -42,7 +42,7 @@ class TicketModel {
   /// Construye un [TicketModel] desde un mapa JSON proveniente del servidor.
   factory TicketModel.fromJson(Map<String, dynamic> json) {
     return TicketModel(
-      id: json['id'] as int? ?? 0,
+      id: (json['id'] ?? '').toString(),
       ticketCode: json['ticket_code'] as String? ?? '',
       qrPayload: json['qr_payload'] as String? ?? '',
       isUsed: json['is_used'] as bool? ?? false,

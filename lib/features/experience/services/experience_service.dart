@@ -10,8 +10,8 @@ import '../models/experience_model.dart';
 class ExperienceService {
   final HttpClient _httpClient;
 
-  /// Caché en memoria para resolver nombres de categorías a sus identificadores numéricos.
-  static final Map<String, int> _categoryCache = <String, int>{};
+  /// Caché en memoria para resolver nombres de categorías a sus identificadores UUID.
+  static final Map<String, String> _categoryCache = <String, String>{};
 
   /// Crea una instancia de [ExperienceService] con inyección opcional de [HttpClient].
   ExperienceService({HttpClient? httpClient})
@@ -24,7 +24,7 @@ class ExperienceService {
       if (response is List<dynamic>) {
         final list = response.whereType<Map<String, dynamic>>().toList();
         for (final item in list) {
-          final int? id = item['id'] as int?;
+          final String? id = item['id']?.toString();
           final String? name = item['name'] as String?;
           if (id != null && name != null && name.trim().isNotEmpty) {
             _categoryCache[name.trim()] = id;
@@ -43,7 +43,7 @@ class ExperienceService {
   /// Envía los filtros como parámetros de consulta HTTP y transforma la lista JSON
   /// devuelta por el servidor en instancias de [ExperienceModel].
   Future<List<ExperienceModel>> getCatalog(ExperienceFilterModel filter) async {
-    int? catId = filter.categoryId;
+    String? catId = filter.categoryId;
     if (catId == null && filter.category.isNotEmpty && filter.category != 'Todos') {
       catId = _categoryCache[filter.category];
     }
@@ -52,8 +52,8 @@ class ExperienceService {
       'page_size': '50',
       if (filter.searchQuery.trim().isNotEmpty)
         'search': filter.searchQuery.trim(),
-      if (catId != null)
-        'category_id': catId.toString(),
+      if (catId != null && catId.isNotEmpty)
+        'category_id': catId,
       if (filter.modality.isNotEmpty && filter.modality != 'ALL')
         'modality': filter.modality,
       if (filter.zone != null &&
@@ -98,8 +98,8 @@ class ExperienceService {
     return result;
   }
 
-  /// Consulta el detalle de una experiencia específica en el servidor por su identificador [id].
-  Future<ExperienceModel?> getExperienceById(int id) async {
+  /// Consulta el detalle de una experiencia específica en el servidor por su identificador [id] (UUID).
+  Future<ExperienceModel?> getExperienceById(String id) async {
     final dynamic response = await _httpClient.get(
       '${ApiConstants.experiencesEndpoint}/$id',
     );

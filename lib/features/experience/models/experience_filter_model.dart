@@ -9,8 +9,8 @@ class ExperienceFilterModel {
   /// Categoría seleccionada ('Todos' o nombre de categoría específica).
   final String category;
 
-  /// Identificador numérico opcional de categoría para consulta directa en backend.
-  final int? categoryId;
+  /// Identificador opcional de categoría (UUID) para consulta directa en backend.
+  final String? categoryId;
 
   /// Modalidad seleccionada ('ALL', 'IN_PERSON', 'VIRTUAL', 'HYBRID').
   final String modality;
@@ -31,7 +31,7 @@ class ExperienceFilterModel {
   ExperienceFilterModel copyWith({
     String? searchQuery,
     String? category,
-    int? categoryId,
+    String? categoryId,
     bool clearCategoryId = false,
     String? modality,
     String? zone,

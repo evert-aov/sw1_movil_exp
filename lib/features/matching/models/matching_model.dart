@@ -3,11 +3,11 @@
 /// Mantiene responsabilidad única modelando el estado de agrupación de asistentes
 /// compatibles interesados en activar una experiencia.
 class MatchingModel {
-  /// Identificador único del grupo de matching.
-  final int id;
+  /// Identificador único del grupo de matching (UUID).
+  final String id;
 
-  /// Identificador de la experiencia asociada.
-  final int experienceId;
+  /// Identificador de la experiencia asociada (UUID).
+  final String experienceId;
 
   /// Título de la experiencia asociada.
   final String experienceTitle;
@@ -97,8 +97,8 @@ class MatchingModel {
   /// Construye una instancia de [MatchingModel] desde un mapa JSON.
   factory MatchingModel.fromJson(Map<String, dynamic> json) {
     return MatchingModel(
-      id: json['id'] as int? ?? 0,
-      experienceId: json['experience_id'] as int? ?? 0,
+      id: (json['id'] ?? '').toString(),
+      experienceId: (json['experience_id'] ?? '').toString(),
       experienceTitle: json['experience_title'] as String? ?? '',
       categoryName: json['category_name'] as String? ?? '',
       zone: json['zone'] as String? ?? '',

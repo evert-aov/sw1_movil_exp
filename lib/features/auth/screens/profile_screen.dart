@@ -148,7 +148,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final UserModel baseUser = _user ??
         const UserModel(
-          id: 0,
+          id: '',
           firstName: '',
           email: '',
         );

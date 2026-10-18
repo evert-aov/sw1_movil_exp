@@ -4,7 +4,7 @@
 /// la entidad de perfil y preferencias del asistente sin valores predefinidos harcodeados.
 class UserModel {
   /// Identificador único del asistente.
-  final int id;
+  final String id;
 
   /// Nombre de pila del asistente.
   final String firstName;
@@ -84,7 +84,7 @@ class UserModel {
   /// Construye una instancia de [UserModel] a partir de un mapa JSON proveniente de la API.
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] as int? ?? 0,
+      id: (json['id'] ?? '').toString(),
       firstName: json['first_name'] as String? ?? '',
       lastName: json['last_name'] as String?,
       email: json['email'] as String? ?? '',

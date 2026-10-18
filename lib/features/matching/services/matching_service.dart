@@ -8,13 +8,13 @@ class MatchingService {
   /// Crea una instancia de [MatchingService].
   const MatchingService();
 
-  /// Firma de contrato para postularse al grupo de matching de la experiencia [experienceId].
-  Future<bool> applyToMatchingGroup(int experienceId) async {
+  /// Firma de contrato para postularse al grupo de matching de la experiencia [experienceId] (UUID).
+  Future<bool> applyToMatchingGroup(String experienceId) async {
     return false;
   }
 
-  /// Firma de contrato para consultar el estado de quórum grupal de la experiencia [experienceId].
-  Future<MatchingModel?> getMatchingStatus(int experienceId) async {
+  /// Firma de contrato para consultar el estado de quórum grupal de la experiencia [experienceId] (UUID).
+  Future<MatchingModel?> getMatchingStatus(String experienceId) async {
     return null;
   }
 }

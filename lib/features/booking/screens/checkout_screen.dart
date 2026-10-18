@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 ///
 /// Mantiene la estructura modular del proyecto sin adelantar funcionalidad fuera del Sprint 1.
 class CheckoutScreen extends StatelessWidget {
-  /// Identificador de la experiencia a reservar.
-  final int experienceId;
+  /// Identificador de la experiencia a reservar (UUID).
+  final String experienceId;
 
   /// Crea una instancia de [CheckoutScreen].
   const CheckoutScreen({super.key, required this.experienceId});
