@@ -1,10 +1,26 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/network/http_client.dart';
+import '../../../core/theme/app_colors.dart';
+import '../models/experience_filter_model.dart';
 import '../models/experience_model.dart';
 import '../services/experience_service.dart';
+import '../widgets/experience_card.dart';
+import 'experience_detail_screen.dart';
 
-// Pantalla de Catálogo y Exploración de Experiencias (CU-05 / HU-05)
+/// Pantalla de Catálogo y Exploración de Experiencias para el Asistente Móvil (Sprint 1 • CU-04 / CU-05 / HU-05).
+///
+/// Gestiona el filtrado por categoría, modalidad y búsqueda textual consultando
+/// dinámicamente el servidor mediante [ExperienceService] sin datos ni categorías harcodeadas.
 class CatalogScreen extends StatefulWidget {
-  const CatalogScreen({super.key});
+  /// Diccionario de localización activo (Español / Inglés).
+  final AppLocalizations i18n;
+
+  /// Crea una instancia de [CatalogScreen].
+  const CatalogScreen({
+    super.key,
+    required this.i18n,
+  });
 
   @override
   State<CatalogScreen> createState() => _CatalogScreenState();
@@ -13,21 +29,12 @@ class CatalogScreen extends StatefulWidget {
 class _CatalogScreenState extends State<CatalogScreen> {
   final ExperienceService _service = ExperienceService();
 
-  List<ExperienceModel> _experiences = [];
+  List<ExperienceModel> _experiences = <ExperienceModel>[];
+  List<String> _dynamicCategories = <String>['Todos'];
   bool _isLoading = true;
+  String? _errorMessage;
 
-  String _searchQuery = '';
-  String _selectedCategory = 'Todos';
-  String _selectedModality = 'ALL';
-
-  final List<String> _categories = [
-    'Todos',
-    'Cocina & Repostería',
-    'Catas & Café',
-    'Arte & Pintura',
-    'Coctelería',
-    'Talleres',
-  ];
+  ExperienceFilterModel _filter = const ExperienceFilterModel();
 
   @override
   void initState() {
@@ -35,770 +42,458 @@ class _CatalogScreenState extends State<CatalogScreen> {
     _loadCatalog();
   }
 
+  /// Consulta el catálogo en [ExperienceService.getCatalog] y extrae las categorías disponibles de los datos recibidos.
   Future<void> _loadCatalog() async {
-    setState(() => _isLoading = true);
-    final data = await _service.getCatalog(
-      searchQuery: _searchQuery,
-      category: _selectedCategory,
-      modality: _selectedModality,
-    );
-    if (mounted) {
-      setState(() {
-        _experiences = data;
-        _isLoading = false;
-      });
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final List<ExperienceModel> data = await _service.getCatalog(_filter);
+      if (mounted) {
+        final Set<String> categorySet = <String>{'Todos', ..._dynamicCategories};
+        for (final exp in data) {
+          if (exp.categoryName.trim().isNotEmpty) {
+            categorySet.add(exp.categoryName.trim());
+          }
+        }
+        setState(() {
+          _experiences = data;
+          _dynamicCategories = categorySet.toList();
+          _isLoading = false;
+        });
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _experiences = <ExperienceModel>[];
+          _isLoading = false;
+          _errorMessage = '${widget.i18n.tr('api_error_prefix')} ${e.message}';
+        });
+      }
     }
   }
 
+  /// Muestra un diálogo informativo explicando el funcionamiento del Quórum Mínimo (sin emojis).
   void _showQuorumInfoDialog() {
-    showDialog(
+    final i18n = widget.i18n;
+    showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (BuildContext ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Text('💡 ', style: TextStyle(fontSize: 22)),
+        title: Row(
+          children: <Widget>[
+            const Icon(
+              Icons.lightbulb_outline_rounded,
+              color: AppColors.primaryVioletLight,
+              size: 22,
+            ),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
-                '¿Cómo funciona el Quórum?',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                i18n.tr('quorum_dialog_title'),
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          children: <Widget>[
             Text(
-              'EXPERIENCIA resuelve el problema de los cupos mínimos:',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              i18n.tr('quorum_dialog_intro'),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
-            SizedBox(height: 8),
-            Text(
-              '• Cada actividad tiene un Quórum Mínimo de asistentes necesarios para que el anfitrión confirme el evento y no se cancele.',
-              style: TextStyle(fontSize: 13, height: 1.4),
+            const SizedBox(height: 10),
+            _buildBulletRow(Icons.groups_outlined, i18n.tr('quorum_dialog_p1')),
+            const SizedBox(height: 8),
+            _buildBulletRow(
+              Icons.trending_up_rounded,
+              i18n.tr('quorum_dialog_p2'),
             ),
-            SizedBox(height: 6),
-            Text(
-              '• Tu reserva suma al indicador de la barra. Cuando se alcanza la meta, el evento se declara CONFIRMADO.',
-              style: TextStyle(fontSize: 13, height: 1.4),
-            ),
-            SizedBox(height: 6),
-            Text(
-              '• Si la fecha límite llega sin alcanzar el quórum, no se cobra nada y se protege tu dinero.',
-              style: TextStyle(fontSize: 13, height: 1.4),
+            const SizedBox(height: 8),
+            _buildBulletRow(
+              Icons.verified_user_outlined,
+              i18n.tr('quorum_dialog_p3'),
             ),
           ],
         ),
-        actions: [
+        actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Entendido', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              i18n.tr('btn_understood'),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryVioletLight,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showDetailBottomSheet(ExperienceModel exp) {
-    showModalBottomSheet(
+  /// Construye una fila de texto con icono para el modal explicativo de Quórum.
+  Widget _buildBulletRow(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Icon(icon, size: 16, color: AppColors.primaryVioletLight),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 12.5, height: 1.4),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Abre la hoja modal inferior con el detalle completo de la experiencia [exp].
+  void _openExperienceDetail(ExperienceModel exp) {
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        height: MediaQuery.of(context).size.height * 0.88,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: [
-                  // Imagen grande
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Stack(
-                      children: [
-                        Image.network(
-                          exp.coverImageUrl ?? '',
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            height: 200,
-                            color: Colors.indigo.shade100,
-                            child: const Icon(Icons.image, size: 48, color: Colors.indigo),
-                          ),
-                        ),
-                        Positioned(
-                          top: 12,
-                          left: 12,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4F46E5),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              exp.categoryName,
-                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 12,
-                          right: 12,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.65),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              exp.modality == 'IN_PERSON'
-                                  ? '🏢 Presencial'
-                                  : exp.modality == 'VIRTUAL'
-                                      ? '💻 Virtual'
-                                      : '🌐 Híbrido',
-                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Título
-                  Text(
-                    exp.title,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF0F172A), height: 1.25),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Info chips (Ubicación, fecha, duración)
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 8,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF4F46E5)),
-                          const SizedBox(width: 4),
-                          Text('${exp.zone ?? ''} • ${exp.venueName ?? ''}', style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF4F46E5)),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${exp.eventDate.day}/${exp.eventDate.month}/${exp.eventDate.year} • ${exp.eventDate.hour.toString().padLeft(2, '0')}:${exp.eventDate.minute.toString().padLeft(2, '0')}',
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.timer_outlined, size: 16, color: Color(0xFF4F46E5)),
-                          const SizedBox(width: 4),
-                          Text('${exp.durationMinutes} min', style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Tarjeta destacada de Quórum
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: exp.isConfirmed ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: exp.isConfirmed ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              exp.isConfirmed ? '✅ ¡Evento Confirmado por Quórum!' : '⏳ Meta para confirmarse:',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: exp.isConfirmed ? const Color(0xFF047857) : const Color(0xFFB45309),
-                              ),
-                            ),
-                            Text(
-                              '${exp.reservedSlots} / ${exp.maxCapacity} cupos',
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: exp.quorumProgress,
-                            minHeight: 8,
-                            backgroundColor: Colors.grey.shade200,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              exp.isConfirmed ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          exp.isConfirmed
-                              ? 'Este evento ya cuenta con el mínimo de asistentes requerido y se realizará con certeza.'
-                              : 'Faltan solo ${exp.slotsRemainingForQuorum} participantes para asegurar que el evento se concrete.',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: exp.isConfirmed ? const Color(0xFF065F46) : const Color(0xFF92400E),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Descripción
-                  const Text('Sobre este evento', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                  const SizedBox(height: 6),
-                  Text(
-                    exp.description,
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade800, height: 1.45),
-                  ),
-
-                  if (exp.address != null && exp.address!.isNotEmpty) ...[
-                    const SizedBox(height: 14),
-                    const Text('Dirección exacta', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text(exp.address!, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
-                  ],
-
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-
-            // Bottom action bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 10, offset: const Offset(0, -4)),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('Precio total', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600)),
-                      Text(
-                        'Bs. ${exp.price.toStringAsFixed(0)}',
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF4F46E5)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: exp.availableSlots > 0
-                          ? () async {
-                              Navigator.pop(ctx);
-                              final success = await _service.reserveSlot(exp.id);
-                              if (success) {
-                                await _loadCatalog();
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      behavior: SnackBarBehavior.floating,
-                                      backgroundColor: const Color(0xFF10B981),
-                                      content: Row(
-                                        children: [
-                                          const Text('🎉 ', style: TextStyle(fontSize: 18)),
-                                          Expanded(
-                                            child: Text(
-                                              '¡Reserva registrada! Sumaste un cupo para activar "${exp.title}".',
-                                              style: const TextStyle(fontWeight: FontWeight.w600),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }
-                              }
-                            }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4F46E5),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        exp.availableSlots > 0 ? 'Reservar Mi Lugar' : 'Agotado',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+      builder: (BuildContext ctx) => ExperienceDetailScreen(
+        experience: exp,
+        i18n: widget.i18n,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'EXPERIENCIA',
-              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: -0.5, fontSize: 20, color: Color(0xFF4F46E5)),
+    final AppLocalizations i18n = widget.i18n;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return RefreshIndicator(
+      onRefresh: _loadCatalog,
+      color: AppColors.primaryViolet,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: <Widget>[
+          // Buscador por palabra clave, categoría o zona
+          TextField(
+            onChanged: (String val) {
+              _filter = _filter.copyWith(searchQuery: val);
+              _loadCatalog();
+            },
+            decoration: InputDecoration(
+              hintText: i18n.tr('search_hint'),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: AppColors.primaryVioletLight,
+              ),
             ),
-            Text(
-              'Eventos con Quórum Inteligente',
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline, color: Color(0xFF4F46E5)),
-            tooltip: '¿Qué es el Quórum?',
-            onPressed: _showQuorumInfoDialog,
           ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadCatalog,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // Barra de Búsqueda
-            TextField(
-              onChanged: (val) {
-                _searchQuery = val;
-                _loadCatalog();
+
+          const SizedBox(height: 12),
+
+          // Banner explicativo de Quórum Mínimo (solo iconos)
+          InkWell(
+            onTap: _showQuorumInfoDialog,
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.amberBgDark : AppColors.amberBgLight,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppColors.amberWarning.withValues(alpha: 0.35),
+                ),
+              ),
+              child: Row(
+                children: <Widget>[
+                  const Icon(
+                    Icons.lightbulb_outline_rounded,
+                    size: 18,
+                    color: AppColors.amberWarning,
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      i18n.tr('quorum_banner_text'),
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: isDark
+                            ? const Color(0xFFFDE68A)
+                            : const Color(0xFF92400E),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: isDark
+                        ? const Color(0xFFFBBF24)
+                        : const Color(0xFFB45309),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Filtros de modalidad con iconos vectoriales
+          Row(
+            children: <Widget>[
+              _buildModalityChip('ALL', i18n.tr('mod_all'), Icons.apps_rounded),
+              const SizedBox(width: 8),
+              _buildModalityChip(
+                'IN_PERSON',
+                i18n.tr('mod_in_person'),
+                Icons.location_city_outlined,
+              ),
+              const SizedBox(width: 8),
+              _buildModalityChip(
+                'VIRTUAL',
+                i18n.tr('mod_virtual'),
+                Icons.laptop_mac_outlined,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Chips horizontales de categorías extraídas dinámicamente de la respuesta API
+          SizedBox(
+            height: 38,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _dynamicCategories.length,
+              separatorBuilder: (BuildContext context, int index) =>
+                  const SizedBox(width: 8),
+              itemBuilder: (BuildContext ctx, int index) {
+                final String cat = _dynamicCategories[index];
+                final bool isSelected = cat == _filter.category;
+                return ChoiceChip(
+                  label: Text(i18n.translateCategory(cat)),
+                  selected: isSelected,
+                  onSelected: (bool selected) {
+                    setState(() {
+                      _filter = _filter.copyWith(category: cat);
+                    });
+                    _loadCatalog();
+                  },
+                  selectedColor: AppColors.primaryViolet,
+                  backgroundColor: isDark
+                      ? AppColors.darkSurface
+                      : AppColors.lightSurface,
+                  labelStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    color: isSelected
+                        ? Colors.white
+                        : (isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: isSelected
+                          ? AppColors.primaryViolet
+                          : (isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder),
+                    ),
+                  ),
+                  showCheckmark: false,
+                );
               },
-              decoration: InputDecoration(
-                hintText: 'Buscar eventos, talleres, catas...',
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF4F46E5)),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Color(0xFF4F46E5), width: 1.5),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Cabecera de resultados
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                '${i18n.tr('available_events')} (${_experiences.length})',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: isDark
+                      ? AppColors.darkTextPrimary
+                      : AppColors.lightTextPrimary,
                 ),
               ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Banner explicativo compacto de Quórum
-            InkWell(
-              onTap: _showQuorumInfoDialog,
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFFBEB),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFFDE68A)),
+              IconButton(
+                onPressed: _loadCatalog,
+                tooltip: i18n.tr('btn_retry'),
+                icon: const Icon(
+                  Icons.refresh_rounded,
+                  size: 18,
+                  color: AppColors.primaryVioletLight,
                 ),
-                child: const Row(
-                  children: [
-                    Text('💡 ', style: TextStyle(fontSize: 18)),
-                    Expanded(
-                      child: Text(
-                        'Quórum Mínimo: Tu reserva activa el evento cuando se alcanza la meta de participantes.',
-                        style: TextStyle(fontSize: 11.5, color: Color(0xFF92400E), fontWeight: FontWeight.w600),
-                      ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          if (_isLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(40),
+                child: CircularProgressIndicator(
+                  color: AppColors.primaryViolet,
+                ),
+              ),
+            )
+          else if (_errorMessage != null)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppColors.roseDanger.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Column(
+                children: <Widget>[
+                  const Icon(
+                    Icons.cloud_off_rounded,
+                    size: 40,
+                    color: AppColors.roseDanger,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
                     ),
-                    Icon(Icons.chevron_right, size: 18, color: Color(0xFFB45309)),
-                  ],
+                  ),
+                  const SizedBox(height: 14),
+                  FilledButton.icon(
+                    onPressed: _loadCatalog,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primaryViolet,
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.refresh_rounded, size: 17),
+                    label: Text(i18n.tr('btn_retry')),
+                  ),
+                ],
+              ),
+            )
+          else if (_experiences.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(36),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                 ),
               ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // Chips de Modalidad (Todos, Presencial, Virtual)
-            Row(
-              children: [
-                _buildModalityFilterChip('ALL', 'Todos'),
-                const SizedBox(width: 8),
-                _buildModalityFilterChip('IN_PERSON', '🏢 Presencial'),
-                const SizedBox(width: 8),
-                _buildModalityFilterChip('VIRTUAL', '💻 Virtual'),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            // Chips horizontales de Categorías
-            SizedBox(
-              height: 38,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _categories.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 8),
-                itemBuilder: (ctx, index) {
-                  final cat = _categories[index];
-                  final isSelected = cat == _selectedCategory;
-                  return ChoiceChip(
-                    label: Text(cat),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedCategory = cat;
-                      });
-                      _loadCatalog();
-                    },
-                    selectedColor: const Color(0xFF4F46E5),
-                    backgroundColor: Colors.white,
-                    labelStyle: TextStyle(
+              child: Column(
+                children: <Widget>[
+                  Icon(
+                    Icons.search_off_rounded,
+                    size: 44,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    i18n.tr('no_events_title'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    i18n.tr('no_events_subtitle'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
                       fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                      color: isSelected ? Colors.white : Colors.grey.shade700,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: isSelected ? const Color(0xFF4F46E5) : Colors.grey.shade300,
-                      ),
-                    ),
-                    showCheckmark: false,
-                  );
-                },
+                  ),
+                ],
+              ),
+            )
+          else
+            ..._experiences.map(
+              (ExperienceModel exp) => ExperienceCard(
+                experience: exp,
+                i18n: i18n,
+                onTap: () => _openExperienceDetail(exp),
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // Header de Resultados
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Eventos Disponibles (${_experiences.length})',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
-                ),
-                Text(
-                  'Sprint 1 • CU-05',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // Listado de Tarjetas
-            if (_isLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(40),
-                  child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
-                ),
-              )
-            else if (_experiences.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(40),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Column(
-                  children: [
-                    const Icon(Icons.search_off, size: 48, color: Colors.grey),
-                    const SizedBox(height: 12),
-                    const Text('No se encontraron eventos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 4),
-                    Text('Intenta cambiando la categoría o término de búsqueda', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
-                  ],
-                ),
-              )
-            else
-              ..._experiences.map((exp) => _buildExperienceCard(exp)),
-          ],
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildModalityFilterChip(String value, String label) {
-    final isSelected = _selectedModality == value;
+  /// Construye un botón de filtro de modalidad con icono y estado activo.
+  Widget _buildModalityChip(String value, String label, IconData icon) {
+    final bool isSelected = _filter.modality == value;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () {
-        setState(() => _selectedModality = value);
+        setState(() {
+          _filter = _filter.copyWith(modality: value);
+        });
         _loadCatalog();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF4F46E5) : Colors.white,
+          color: isSelected
+              ? AppColors.primaryViolet
+              : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSelected ? const Color(0xFF4F46E5) : Colors.grey.shade300),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            color: isSelected ? Colors.white : Colors.grey.shade700,
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primaryViolet
+                : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildExperienceCard(ExperienceModel exp) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: InkWell(
-        onTap: () => _showDetailBottomSheet(exp),
-        borderRadius: BorderRadius.circular(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Portada
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                  child: Image.network(
-                    exp.coverImageUrl ?? '',
-                    height: 160,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 160,
-                      color: Colors.grey.shade200,
-                      child: const Center(child: Icon(Icons.image, size: 40, color: Colors.grey)),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 10,
-                  left: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4F46E5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      exp.categoryName,
-                      style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.65),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      exp.modality == 'IN_PERSON' ? '🏢 Presencial' : '💻 Virtual',
-                      style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected
+                  ? Colors.white
+                  : (isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary),
             ),
-
-            // Contenido
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Fecha y Zona
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '📅 ${exp.eventDate.day}/${exp.eventDate.month} • ${exp.eventDate.hour.toString().padLeft(2, '0')}:${exp.eventDate.minute.toString().padLeft(2, '0')}',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
-                      ),
-                      Text(
-                        '📍 ${exp.zone ?? ''}',
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF4F46E5), fontWeight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  Text(
-                    exp.title,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF0F172A), height: 1.25),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Text(
-                    exp.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.35),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Barra de Quórum
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: exp.isConfirmed ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: exp.isConfirmed ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              exp.isConfirmed ? '✅ ¡Confirmado!' : '⏳ Faltan ${exp.slotsRemainingForQuorum} cupos',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: exp.isConfirmed ? const Color(0xFF047857) : const Color(0xFFB45309),
-                              ),
-                            ),
-                            Text(
-                              '${exp.reservedSlots}/${exp.maxCapacity}',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 5),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(3),
-                          child: LinearProgressIndicator(
-                            value: exp.quorumProgress,
-                            minHeight: 5,
-                            backgroundColor: Colors.grey.shade200,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              exp.isConfirmed ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Meta mín: ${exp.minCapacity} personas',
-                              style: TextStyle(fontSize: 9.5, color: Colors.grey.shade600),
-                            ),
-                            Text(
-                              'Máx: ${exp.maxCapacity}',
-                              style: TextStyle(fontSize: 9.5, color: Colors.grey.shade600),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Precio y Botón
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Cupo por persona', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600)),
-                          Text(
-                            'Bs. ${exp.price.toStringAsFixed(0)}',
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
-                          ),
-                        ],
-                      ),
-                      ElevatedButton(
-                        onPressed: () => _showDetailBottomSheet(exp),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4F46E5),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                        child: const Text('Ver Detalle', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
-                ],
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected
+                    ? Colors.white
+                    : (isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary),
               ),
             ),
           ],

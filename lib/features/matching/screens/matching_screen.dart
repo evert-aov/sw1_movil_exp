@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 
-// Pantalla esqueleto de Matching Grupal (CU-07)
+/// Pantalla esqueleto de Matching Grupal Dinámico (Planificada para Sprint 2 • CU-07).
+///
+/// Conserva el contrato de interfaz para el módulo de agrupación por intereses.
 class MatchingScreen extends StatelessWidget {
+  /// Crea una instancia de [MatchingScreen].
   const MatchingScreen({super.key});
 
-  void onApplyQuorumPressed() {
-    // Firma de acción para enviar postulación de interés grupal
-  }
+  /// Firma de acción para postular interés grupal a una experiencia.
+  void onApplyQuorumPressed() {}
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Group Matching')),
-      body: const Center(
-        child: Text('Matching & Quorum Screen (CU-07)'),
-      ),
+    return const Center(
+      child: Text('Dynamic Group Matching (Sprint 2)'),
     );
   }
 }

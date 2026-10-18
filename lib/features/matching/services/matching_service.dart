@@ -1,14 +1,20 @@
 import '../models/matching_model.dart';
 
-// Servicio de matching grupal: únicamente firmas de métodos (CU-07)
+/// Servicio de dominio para grupos de Matching Dinámico (Planificado para Sprint 2 • CU-07).
+///
+/// En el alcance del Sprint 1 define únicamente las firmas documentadas de contrato
+/// bajo el principio de responsabilidad única.
 class MatchingService {
+  /// Crea una instancia de [MatchingService].
+  const MatchingService();
+
+  /// Firma de contrato para postularse al grupo de matching de la experiencia [experienceId].
   Future<bool> applyToMatchingGroup(int experienceId) async {
-    // Firma para postularse a grupo y sumar quórum
     return false;
   }
 
+  /// Firma de contrato para consultar el estado de quórum grupal de la experiencia [experienceId].
   Future<MatchingModel?> getMatchingStatus(int experienceId) async {
-    // Firma para consultar progreso de participantes
     return null;
   }
 }
