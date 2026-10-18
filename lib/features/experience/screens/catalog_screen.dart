@@ -8,10 +8,10 @@ import '../services/experience_service.dart';
 import '../widgets/experience_card.dart';
 import 'experience_detail_screen.dart';
 
-/// Pantalla de Catálogo y Exploración de Experiencias para el Asistente Móvil (Sprint 1 • CU-04 / CU-05 / HU-05).
+/// Pantalla de Catálogo y Exploración de Experiencias multiplataforma (Sprint 1 • CU-04 / CU-05 / HU-05).
 ///
-/// Gestiona el filtrado por categoría, modalidad y búsqueda textual consultando
-/// dinámicamente el servidor mediante [ExperienceService] sin datos ni categorías harcodeadas.
+/// Se adapta tanto a pantallas móviles como a pantallas anchas (Web, Tablet, Desktop)
+/// consultando dinámicamente el servidor mediante [ExperienceService] sin datos harcodeados.
 class CatalogScreen extends StatefulWidget {
   /// Diccionario de localización activo (Español / Inglés).
   final AppLocalizations i18n;
@@ -162,6 +162,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: 680),
       builder: (BuildContext ctx) => ExperienceDetailScreen(
         experience: exp,
         i18n: widget.i18n,
@@ -245,16 +246,16 @@ class _CatalogScreenState extends State<CatalogScreen> {
           const SizedBox(height: 14),
 
           // Filtros de modalidad con iconos vectoriales
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: <Widget>[
               _buildModalityChip('ALL', i18n.tr('mod_all'), Icons.apps_rounded),
-              const SizedBox(width: 8),
               _buildModalityChip(
                 'IN_PERSON',
                 i18n.tr('mod_in_person'),
                 Icons.location_city_outlined,
               ),
-              const SizedBox(width: 8),
               _buildModalityChip(
                 'VIRTUAL',
                 i18n.tr('mod_virtual'),
@@ -434,12 +435,38 @@ class _CatalogScreenState extends State<CatalogScreen> {
               ),
             )
           else
-            ..._experiences.map(
-              (ExperienceModel exp) => ExperienceCard(
-                experience: exp,
-                i18n: i18n,
-                onTap: () => _openExperienceDetail(exp),
-              ),
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                if (constraints.maxWidth >= 720) {
+                  return Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    children: _experiences.map((ExperienceModel exp) {
+                      final double cardWidth =
+                          (constraints.maxWidth - 16) / 2;
+                      return SizedBox(
+                        width: cardWidth,
+                        child: ExperienceCard(
+                          experience: exp,
+                          i18n: i18n,
+                          onTap: () => _openExperienceDetail(exp),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                }
+                return Column(
+                  children: _experiences
+                      .map(
+                        (ExperienceModel exp) => ExperienceCard(
+                          experience: exp,
+                          i18n: i18n,
+                          onTap: () => _openExperienceDetail(exp),
+                        ),
+                      )
+                      .toList(),
+                );
+              },
             ),
         ],
       ),

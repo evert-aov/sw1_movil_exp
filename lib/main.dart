@@ -8,13 +8,13 @@ import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/profile_screen.dart';
 import 'features/experience/screens/catalog_screen.dart';
 
-/// Punto de entrada principal de la aplicación móvil EXPERIENCIA (Alcance Sprint 1).
+/// Punto de entrada principal multiplataforma de EXPERIENCIA (Android, iOS, Web, Windows, macOS, Linux).
 void main() {
   runApp(const ExperienciaApp());
 }
 
 /// Widget raíz que coordina el estado global de Tema (Claro/Oscuro), Idioma (ES/EN)
-/// y navegación de los módulos del Sprint 1 para el Usuario Asistente.
+/// y navegación adaptativa del Sprint 1 para todas las plataformas.
 class ExperienciaApp extends StatefulWidget {
   /// Crea la instancia raíz de [ExperienciaApp].
   const ExperienciaApp({super.key});
@@ -53,32 +53,6 @@ class _ExperienciaAppState extends State<ExperienciaApp> {
           darkTheme: AppTheme.darkTheme,
           themeMode: _themeController.themeMode,
           locale: _localeController.locale,
-          builder: (BuildContext context, Widget? child) {
-            final bool isDark =
-                Theme.of(context).brightness == Brightness.dark;
-            return ColoredBox(
-              color: isDark
-                  ? const Color(0xFF050508)
-                  : const Color(0xFFE9E7F5),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 440),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      border: Border.symmetric(
-                        vertical: BorderSide(
-                          color: isDark
-                              ? AppColors.darkBorder
-                              : AppColors.lightBorder,
-                        ),
-                      ),
-                    ),
-                    child: child ?? const SizedBox.shrink(),
-                  ),
-                ),
-              ),
-            );
-          },
           home: MainNavigationScreen(
             i18n: i18n,
             onToggleTheme: _themeController.toggleTheme,
@@ -90,10 +64,9 @@ class _ExperienciaAppState extends State<ExperienciaApp> {
   }
 }
 
-/// Estructura de navegación inferior para el Sprint 1 del Asistente Móvil:
-/// - Acceso / Registro (CU-01 / CU-02)
-/// - Descubrir / Catálogo de Experiencias (CU-04 / CU-05)
-/// - Mi Perfil y Preferencias (CU-02 / CU-03)
+/// Estructura de navegación adaptativa multiplataforma para el Sprint 1:
+/// - En pantallas móviles/compactas muestra `NavigationBar` inferior.
+/// - En pantallas anchas (Web, Tablet, Desktop) adapta el contenedor y navegación.
 class MainNavigationScreen extends StatefulWidget {
   /// Diccionario de localización activo.
   final AppLocalizations i18n;
@@ -135,16 +108,26 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           });
         },
       ),
-      CatalogScreen(i18n: i18n),
-      ProfileScreen(
-        i18n: i18n,
-        onLogout: () {
-          setState(() {
-            _currentIndex = 0;
-          });
-        },
-        onToggleTheme: widget.onToggleTheme,
-        onToggleLanguage: widget.onToggleLanguage,
+      Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1120),
+          child: CatalogScreen(i18n: i18n),
+        ),
+      ),
+      Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 820),
+          child: ProfileScreen(
+            i18n: i18n,
+            onLogout: () {
+              setState(() {
+                _currentIndex = 0;
+              });
+            },
+            onToggleTheme: widget.onToggleTheme,
+            onToggleLanguage: widget.onToggleLanguage,
+          ),
+        ),
       ),
     ];
 

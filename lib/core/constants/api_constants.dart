@@ -1,17 +1,32 @@
-/// Constantes de configuración de red y rutas de la API REST para el asistente móvil.
+import 'package:flutter/foundation.dart';
+
+/// Constantes de configuración de red y rutas de la API REST multiplataforma.
 ///
-/// Cumple con el principio de responsabilidad única centralizando únicamente
-/// las rutas de acceso remoto del cliente móvil y permitiendo inyectar la URL
-/// base por variables de entorno en tiempo de compilación (`--dart-define`).
+/// Cumple con el principio de responsabilidad única centralizando las rutas
+/// de acceso remoto y resolviendo automáticamente el host base según la
+/// plataforma de ejecución (Android, iOS, Web, Windows, macOS, Linux) sin
+/// acoplar paquetes incompatibles con Web.
 class ApiConstants {
   /// Constructor privado para evitar instanciación de clase utilitaria.
   const ApiConstants._();
 
-  /// URL base del servidor backend obtenida por configuración de entorno.
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://localhost:8000/api',
-  );
+  /// Valor opcional inyectado por compilación mediante `--dart-define=API_BASE_URL=...`.
+  static const String _envBaseUrl = String.fromEnvironment('API_BASE_URL');
+
+  /// Retorna la URL base del servidor backend adaptada a la plataforma actual.
+  ///
+  /// - Si se definió `API_BASE_URL` por entorno, utiliza ese valor.
+  /// - En Android nativo utiliza `http://10.0.2.2:8000/api` para conectar con el host.
+  /// - En Web, iOS, Windows, macOS y Linux utiliza `http://localhost:8000/api`.
+  static String get baseUrl {
+    if (_envBaseUrl.isNotEmpty) {
+      return _envBaseUrl;
+    }
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8000/api';
+    }
+    return 'http://localhost:8000/api';
+  }
 
   /// Endpoint para inicio de sesión de asistentes (CU-01 / HU-02).
   static const String loginEndpoint = '/auth/login';

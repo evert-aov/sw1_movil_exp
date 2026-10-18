@@ -1,7 +1,7 @@
 /// Diccionario centralizado de internacionalización (Español e Inglés).
 ///
 /// Cumple con el principio de responsabilidad única proveyendo textos traducidos
-/// libres de emojis para todas las vistas orientadas al usuario asistente.
+/// libres de emojis para todas las vistas multiplataforma del asistente.
 class AppLocalizations {
   /// Código de idioma activo ('es' o 'en').
   final String languageCode;
@@ -12,13 +12,22 @@ class AppLocalizations {
   static const Map<String, Map<String, String>> _localizedValues = {
     'es': {
       'app_title': 'EXPERIENCIA',
-      'app_subtitle': 'Experiencias que responden • Asistente Móvil',
+      'app_subtitle': 'Experiencias que responden • Descubre y Conecta',
+      'hero_tagline': 'EXPERIENCIAS QUE RESPONDEN · DESCUBRIR · CONECTAR · OPTIMIZAR',
+      'hero_title': 'Conecta experiencias,\noptimiza audiencias\nen tiempo real',
+      'hero_description': 'Una plataforma inteligente para descubrir momentos únicos y conectar con grupos afines, resguardando siempre tu privacidad.',
+      'feature_1_title': 'Matching Grupal Dinámico',
+      'feature_1_desc': 'Alcanza el quórum mínimo viable automáticamente',
+      'feature_2_title': 'Visión Efímera en RAM',
+      'feature_2_desc': 'Cero almacenamiento biométrico bajo GDPR',
+      'feature_3_title': 'Reserva Protegida',
+      'feature_3_desc': 'Confirmación transparente al completar el cupo mínimo',
       'nav_discover': 'Descubrir',
       'nav_profile': 'Mi Perfil',
       'welcome_badge': 'BIENVENIDO A EXPERIENCIA',
       'login_header': 'Accede a tu cuenta.',
       'register_header': 'Crea tu acceso.',
-      'auth_subtitle': 'Descubre momentos únicos y personaliza tu perfil de asistente en tiempo real.',
+      'auth_subtitle': 'Únete como asistente para explorar y reservar experiencias en cualquier dispositivo.',
       'tab_login': 'Iniciar sesión',
       'tab_register': 'Crear cuenta',
       'label_fullname': 'Nombre completo',
@@ -34,7 +43,7 @@ class AppLocalizations {
       'show_password': 'Mostrar',
       'hide_password': 'Ocultar',
       'attendee_role_title': 'Quiero ser Asistente',
-      'attendee_role_desc': 'Descubrir y reservar experiencias',
+      'attendee_role_desc': 'Descubrir y reservar',
       'btn_login': 'Iniciar sesión',
       'btn_register': 'Crear mi cuenta',
       'terms_footer': 'Al continuar aceptas nuestros Términos de uso y Política de privacidad.',
@@ -92,13 +101,22 @@ class AppLocalizations {
     },
     'en': {
       'app_title': 'EXPERIENCIA',
-      'app_subtitle': 'Responsive Experiences • Mobile Attendee',
+      'app_subtitle': 'Responsive Experiences • Discover & Connect',
+      'hero_tagline': 'RESPONSIVE EXPERIENCES · DISCOVER · CONNECT · OPTIMIZE',
+      'hero_title': 'Connect experiences,\noptimize audiences\nin real time',
+      'hero_description': 'An intelligent platform to discover unique moments and connect with like-minded groups while strictly protecting your privacy.',
+      'feature_1_title': 'Dynamic Group Matching',
+      'feature_1_desc': 'Reach the minimum viable quorum automatically',
+      'feature_2_title': 'Ephemeral RAM Vision',
+      'feature_2_desc': 'Zero biometric storage under GDPR compliance',
+      'feature_3_title': 'Protected Booking',
+      'feature_3_desc': 'Transparent confirmation once minimum quorum is met',
       'nav_discover': 'Discover',
       'nav_profile': 'Profile',
       'welcome_badge': 'WELCOME TO EXPERIENCIA',
       'login_header': 'Sign in to your account.',
       'register_header': 'Create your access.',
-      'auth_subtitle': 'Discover unique moments and customize your attendee profile in real time.',
+      'auth_subtitle': 'Join as an attendee to explore and book experiences across any device.',
       'tab_login': 'Sign In',
       'tab_register': 'Create Account',
       'label_fullname': 'Full Name',
@@ -114,7 +132,7 @@ class AppLocalizations {
       'show_password': 'Show',
       'hide_password': 'Hide',
       'attendee_role_title': 'I want to be an Attendee',
-      'attendee_role_desc': 'Discover and book experiences',
+      'attendee_role_desc': 'Discover and book',
       'btn_login': 'Sign In',
       'btn_register': 'Create My Account',
       'terms_footer': 'By continuing, you agree to our Terms of Use and Privacy Policy.',

@@ -7,10 +7,11 @@ import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import 'register_screen.dart';
 
-/// Pantalla de Inicio de Sesión para el Usuario Asistente Móvil (Sprint 1 • CU-01 / CU-02 / HU-02).
+/// Pantalla de Inicio de Sesión y Registro multiplataforma para el Usuario Asistente (Sprint 1 • CU-01 / CU-02).
 ///
-/// Sigue el principio de responsabilidad única encargándose exclusivamente
-/// de la captura y validación de credenciales del asistente sin valores harcodeados.
+/// Se adapta automáticamente tanto a pantallas móviles (Android / iOS) como a pantallas
+/// anchas (Web / Desktop / Tablet) mostrando el diseño dividido de dos columnas
+/// de las capturas oficiales sin datos harcodeados.
 class LoginScreen extends StatefulWidget {
   /// Diccionario de localización activo.
   final AppLocalizations i18n;
@@ -89,11 +90,191 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final bool isWide = constraints.maxWidth >= 880;
+        if (isWide) {
+          return Row(
+            children: <Widget>[
+              Expanded(
+                flex: 11,
+                child: _buildHeroBrandingPanel(context),
+              ),
+              Container(
+                width: 1,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkBorder
+                    : AppColors.lightBorder,
+              ),
+              Expanded(
+                flex: 10,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 460),
+                    child: _buildAuthFormPanel(context),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: _buildAuthFormPanel(context),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Construye el panel izquierdo de presentación visual para pantallas anchas (Web/Desktop/Tablet).
+  Widget _buildHeroBrandingPanel(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final AppLocalizations i18n = widget.i18n;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 36),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            i18n.tr('hero_tagline'),
+            style: const TextStyle(
+              color: AppColors.primaryVioletLight,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.8,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            i18n.tr('hero_title'),
+            style: TextStyle(
+              fontSize: 42,
+              fontWeight: FontWeight.w900,
+              height: 1.12,
+              letterSpacing: -1.0,
+              color: isDark
+                  ? AppColors.darkTextPrimary
+                  : AppColors.lightTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 18),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Text(
+              i18n.tr('hero_description'),
+              style: TextStyle(
+                fontSize: 15,
+                height: 1.55,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 36),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _buildFeatureHighlightCard(
+                  context: context,
+                  icon: Icons.groups_outlined,
+                  title: i18n.tr('feature_1_title'),
+                  description: i18n.tr('feature_1_desc'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildFeatureHighlightCard(
+                  context: context,
+                  icon: Icons.verified_user_outlined,
+                  title: i18n.tr('feature_2_title'),
+                  description: i18n.tr('feature_2_desc'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildFeatureHighlightCard(
+                  context: context,
+                  icon: Icons.bar_chart_rounded,
+                  title: i18n.tr('feature_3_title'),
+                  description: i18n.tr('feature_3_desc'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Construye una tarjeta informativa con icono para la columna de presentación.
+  Widget _buildFeatureHighlightCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primaryViolet.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              size: 18,
+              color: AppColors.primaryVioletLight,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 11.5,
+              height: 1.35,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Construye el panel del formulario de Inicio de Sesión / Registro.
+  Widget _buildAuthFormPanel(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final AppLocalizations i18n = widget.i18n;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -320,7 +501,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 18),
 
-                // Tarjeta de rol Asistente Móvil
+                // Tarjeta de rol Asistente
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
