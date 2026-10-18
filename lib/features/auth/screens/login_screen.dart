@@ -90,42 +90,103 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final bool isWide = constraints.maxWidth >= 880;
-        if (isWide) {
-          return Row(
-            children: <Widget>[
-              Expanded(
-                flex: 11,
-                child: _buildHeroBrandingPanel(context),
-              ),
-              Container(
-                width: 1,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkBorder
-                    : AppColors.lightBorder,
-              ),
-              Expanded(
-                flex: 10,
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 460),
-                    child: _buildAuthFormPanel(context),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final AppLocalizations i18n = widget.i18n;
 
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: _buildAuthFormPanel(context),
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          children: <Widget>[
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: AppColors.primaryViolet,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.auto_awesome_outlined,
+                color: Colors.white,
+                size: 17,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              i18n.tr('app_title'),
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+        actions: <Widget>[
+          TextButton.icon(
+            onPressed: widget.onToggleLanguage,
+            icon: const Icon(
+              Icons.translate_rounded,
+              size: 16,
+              color: AppColors.primaryVioletLight,
+            ),
+            label: Text(
+              i18n.languageCode.toUpperCase(),
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+                color: AppColors.primaryVioletLight,
+              ),
+            ),
           ),
-        );
-      },
+          IconButton(
+            onPressed: widget.onToggleTheme,
+            tooltip: isDark ? i18n.tr('theme_light') : i18n.tr('theme_dark'),
+            icon: Icon(
+              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final bool isWide = constraints.maxWidth >= 880;
+            if (isWide) {
+              return Row(
+                children: <Widget>[
+                  Expanded(
+                    flex: 11,
+                    child: _buildHeroBrandingPanel(context),
+                  ),
+                  Container(
+                    width: 1,
+                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                  ),
+                  Expanded(
+                    flex: 10,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 460),
+                        child: _buildAuthFormPanel(context),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: _buildAuthFormPanel(context),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 

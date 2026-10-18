@@ -4,8 +4,10 @@ import 'core/localization/locale_controller.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
+import 'features/auth/models/user_model.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/profile_screen.dart';
+import 'features/auth/services/auth_service.dart';
 import 'features/experience/screens/catalog_screen.dart';
 
 /// Punto de entrada principal multiplataforma de EXPERIENCIA (Android, iOS, Web, Windows, macOS, Linux).
@@ -14,7 +16,7 @@ void main() {
 }
 
 /// Widget raíz que coordina el estado global de Tema (Claro/Oscuro), Idioma (ES/EN)
-/// y navegación adaptativa del Sprint 1 para todas las plataformas.
+/// y flujo de autenticación del Asistente (Login como primera pantalla).
 class ExperienciaApp extends StatefulWidget {
   /// Crea la instancia raíz de [ExperienciaApp].
   const ExperienciaApp({super.key});
@@ -26,6 +28,15 @@ class ExperienciaApp extends StatefulWidget {
 class _ExperienciaAppState extends State<ExperienciaApp> {
   final ThemeController _themeController = ThemeController();
   final LocaleController _localeController = LocaleController();
+  final AuthService _authService = AuthService();
+
+  UserModel? _currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentUser = _authService.currentUser;
+  }
 
   @override
   void dispose() {
@@ -53,19 +64,36 @@ class _ExperienciaAppState extends State<ExperienciaApp> {
           darkTheme: AppTheme.darkTheme,
           themeMode: _themeController.themeMode,
           locale: _localeController.locale,
-          home: MainNavigationScreen(
-            i18n: i18n,
-            onToggleTheme: _themeController.toggleTheme,
-            onToggleLanguage: _localeController.toggleLocale,
-          ),
+          home: _currentUser == null
+              ? LoginScreen(
+                  i18n: i18n,
+                  onToggleTheme: _themeController.toggleTheme,
+                  onToggleLanguage: _localeController.toggleLocale,
+                  onAuthenticated: (UserModel user) {
+                    setState(() {
+                      _currentUser = user;
+                    });
+                  },
+                )
+              : MainNavigationScreen(
+                  i18n: i18n,
+                  onToggleTheme: _themeController.toggleTheme,
+                  onToggleLanguage: _localeController.toggleLocale,
+                  onLogout: () {
+                    _authService.logout();
+                    setState(() {
+                      _currentUser = null;
+                    });
+                  },
+                ),
         );
       },
     );
   }
 }
 
-/// Estructura de navegación adaptativa multiplataforma para el Sprint 1:
-/// - En pantallas móviles/compactas muestra `NavigationBar` inferior.
+/// Estructura de navegación principal tras iniciar sesión en el Sprint 1:
+/// - En pantallas móviles/compactas muestra `NavigationBar` inferior (Descubrir y Perfil).
 /// - En pantallas anchas (Web, Tablet, Desktop) adapta el contenedor y navegación.
 class MainNavigationScreen extends StatefulWidget {
   /// Diccionario de localización activo.
@@ -77,12 +105,16 @@ class MainNavigationScreen extends StatefulWidget {
   /// Acción para alternar entre Español e Inglés.
   final VoidCallback onToggleLanguage;
 
+  /// Acción para cerrar sesión y volver a la pantalla inicial de Login.
+  final VoidCallback onLogout;
+
   /// Crea una instancia de [MainNavigationScreen].
   const MainNavigationScreen({
     super.key,
     required this.i18n,
     required this.onToggleTheme,
     required this.onToggleLanguage,
+    required this.onLogout,
   });
 
   @override
@@ -98,16 +130,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final AppLocalizations i18n = widget.i18n;
 
     final List<Widget> screens = <Widget>[
-      LoginScreen(
-        i18n: i18n,
-        onToggleTheme: widget.onToggleTheme,
-        onToggleLanguage: widget.onToggleLanguage,
-        onAuthenticated: (_) {
-          setState(() {
-            _currentIndex = 1;
-          });
-        },
-      ),
       Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1120),
@@ -119,11 +141,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           constraints: const BoxConstraints(maxWidth: 820),
           child: ProfileScreen(
             i18n: i18n,
-            onLogout: () {
-              setState(() {
-                _currentIndex = 0;
-              });
-            },
+            onLogout: widget.onLogout,
             onToggleTheme: widget.onToggleTheme,
             onToggleLanguage: widget.onToggleLanguage,
           ),
@@ -214,14 +232,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           });
         },
         destinations: <Widget>[
-          NavigationDestination(
-            icon: const Icon(Icons.lock_open_outlined),
-            selectedIcon: const Icon(
-              Icons.lock_open_rounded,
-              color: AppColors.primaryVioletLight,
-            ),
-            label: i18n.tr('tab_login'),
-          ),
           NavigationDestination(
             icon: const Icon(Icons.explore_outlined),
             selectedIcon: const Icon(
