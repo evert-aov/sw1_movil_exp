@@ -72,6 +72,14 @@ class AuthService {
           response['jwt']) as String?;
       if (token != null) {
         HttpClient.setAuthToken(token);
+      } else {
+        // El endpoint /auth/register del backend retorna ProfileDTO sin token JWT.
+        // Se realiza login automático con las credenciales para adquirir el JWT y abrir la sesión.
+        try {
+          return await login(credentials);
+        } catch (_) {
+          // Si el login falla, conserva el perfil retornado por el registro.
+        }
       }
 
       if (response['user'] is Map<String, dynamic>) {
@@ -110,7 +118,7 @@ class AuthService {
   Future<UserModel> updateProfile(UserModel updatedUser) async {
     final dynamic response = await _httpClient.put(
       ApiConstants.profileEndpoint,
-      updatedUser.toJson(),
+      updatedUser.toUpdateJson(),
     );
 
     if (response is Map<String, dynamic>) {

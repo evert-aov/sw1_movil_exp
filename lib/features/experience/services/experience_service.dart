@@ -6,24 +6,54 @@ import '../models/experience_model.dart';
 /// Servicio de dominio para la exploración de catálogo y detalle de experiencias (CU-04 / HU-05).
 ///
 /// Mantiene alta cohesión y cero datos harcodeados: todas las experiencias se obtienen
-/// dinámicamente desde el endpoint remoto [ApiConstants.experiencesEndpoint].
+/// dinámicamente desde el endpoint remoto [ApiConstants.experiencesCatalogEndpoint].
 class ExperienceService {
   final HttpClient _httpClient;
+
+  /// Caché en memoria para resolver nombres de categorías a sus identificadores numéricos.
+  static final Map<String, int> _categoryCache = <String, int>{};
 
   /// Crea una instancia de [ExperienceService] con inyección opcional de [HttpClient].
   ExperienceService({HttpClient? httpClient})
       : _httpClient = httpClient ?? HttpClient();
+
+  /// Obtiene la lista oficial de categorías temáticas desde el servidor (`GET /api/categories`).
+  Future<List<Map<String, dynamic>>> getCategories() async {
+    try {
+      final dynamic response = await _httpClient.get(ApiConstants.categoriesEndpoint);
+      if (response is List<dynamic>) {
+        final list = response.whereType<Map<String, dynamic>>().toList();
+        for (final item in list) {
+          final int? id = item['id'] as int?;
+          final String? name = item['name'] as String?;
+          if (id != null && name != null && name.trim().isNotEmpty) {
+            _categoryCache[name.trim()] = id;
+          }
+        }
+        return list;
+      }
+    } catch (_) {
+      // Retorna lista vacía si el endpoint de categorías no está disponible
+    }
+    return const <Map<String, dynamic>>[];
+  }
 
   /// Consulta el catálogo de experiencias en el backend aplicando los criterios de [filter] (CU-04 / HU-05).
   ///
   /// Envía los filtros como parámetros de consulta HTTP y transforma la lista JSON
   /// devuelta por el servidor en instancias de [ExperienceModel].
   Future<List<ExperienceModel>> getCatalog(ExperienceFilterModel filter) async {
+    int? catId = filter.categoryId;
+    if (catId == null && filter.category.isNotEmpty && filter.category != 'Todos') {
+      catId = _categoryCache[filter.category];
+    }
+
     final Map<String, String> queryParams = <String, String>{
+      'page_size': '50',
       if (filter.searchQuery.trim().isNotEmpty)
         'search': filter.searchQuery.trim(),
-      if (filter.category.isNotEmpty && filter.category != 'Todos')
-        'category': filter.category,
+      if (catId != null)
+        'category_id': catId.toString(),
       if (filter.modality.isNotEmpty && filter.modality != 'ALL')
         'modality': filter.modality,
       if (filter.zone != null &&
@@ -33,7 +63,7 @@ class ExperienceService {
     };
 
     final dynamic response = await _httpClient.get(
-      ApiConstants.experiencesEndpoint,
+      ApiConstants.experiencesCatalogEndpoint,
       queryParameters: queryParams,
     );
 
@@ -41,7 +71,9 @@ class ExperienceService {
     if (response is List<dynamic>) {
       rawList = response;
     } else if (response is Map<String, dynamic>) {
-      if (response['items'] is List<dynamic>) {
+      if (response['experiences'] is List<dynamic>) {
+        rawList = response['experiences'] as List<dynamic>;
+      } else if (response['items'] is List<dynamic>) {
         rawList = response['items'] as List<dynamic>;
       } else if (response['data'] is List<dynamic>) {
         rawList = response['data'] as List<dynamic>;
@@ -50,10 +82,20 @@ class ExperienceService {
       }
     }
 
-    return rawList
+    List<ExperienceModel> result = rawList
         .whereType<Map<String, dynamic>>()
         .map(ExperienceModel.fromJson)
         .toList();
+
+    // Filtro cliente como fallback si se seleccionó una categoría que aún no tiene ID en caché
+    if (filter.category.isNotEmpty && filter.category != 'Todos' && catId == null) {
+      result = result
+          .where((exp) =>
+              exp.categoryName.toLowerCase().contains(filter.category.toLowerCase()))
+          .toList();
+    }
+
+    return result;
   }
 
   /// Consulta el detalle de una experiencia específica en el servidor por su identificador [id].

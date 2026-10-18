@@ -24,10 +24,21 @@ class AuthCredentialsModel {
 
   /// Convierte las credenciales a formato JSON para peticiones de autenticación.
   Map<String, dynamic> toJson() {
+    String? firstName;
+    String? lastName;
+    if (fullName != null && fullName!.trim().isNotEmpty) {
+      final parts = fullName!.trim().split(RegExp(r'\s+'));
+      firstName = parts.first;
+      if (parts.length > 1) {
+        lastName = parts.sublist(1).join(' ');
+      }
+    }
+
     return <String, dynamic>{
       'email': email.trim(),
       'password': password,
-      if (fullName != null) 'full_name': fullName!.trim(),
+      if (firstName != null && firstName.isNotEmpty) 'first_name': firstName,
+      if (lastName != null && lastName.isNotEmpty) 'last_name': lastName,
       'role': 'ATTENDEE',
     };
   }

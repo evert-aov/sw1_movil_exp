@@ -50,6 +50,20 @@ class _CatalogScreenState extends State<CatalogScreen> {
     });
 
     try {
+      if (_dynamicCategories.length <= 1) {
+        final categories = await _service.getCategories();
+        if (categories.isNotEmpty && mounted) {
+          final Set<String> loadedCategories = <String>{'Todos'};
+          for (final item in categories) {
+            final String? name = item['name'] as String?;
+            if (name != null && name.trim().isNotEmpty) {
+              loadedCategories.add(name.trim());
+            }
+          }
+          _dynamicCategories = loadedCategories.toList();
+        }
+      }
+
       final List<ExperienceModel> data = await _service.getCatalog(_filter);
       if (mounted) {
         final Set<String> categorySet = <String>{'Todos', ..._dynamicCategories};

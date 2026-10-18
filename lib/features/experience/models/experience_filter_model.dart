@@ -9,6 +9,9 @@ class ExperienceFilterModel {
   /// Categoría seleccionada ('Todos' o nombre de categoría específica).
   final String category;
 
+  /// Identificador numérico opcional de categoría para consulta directa en backend.
+  final int? categoryId;
+
   /// Modalidad seleccionada ('ALL', 'IN_PERSON', 'VIRTUAL', 'HYBRID').
   final String modality;
 
@@ -19,6 +22,7 @@ class ExperienceFilterModel {
   const ExperienceFilterModel({
     this.searchQuery = '',
     this.category = 'Todos',
+    this.categoryId,
     this.modality = 'ALL',
     this.zone,
   });
@@ -27,12 +31,15 @@ class ExperienceFilterModel {
   ExperienceFilterModel copyWith({
     String? searchQuery,
     String? category,
+    int? categoryId,
+    bool clearCategoryId = false,
     String? modality,
     String? zone,
   }) {
     return ExperienceFilterModel(
       searchQuery: searchQuery ?? this.searchQuery,
       category: category ?? this.category,
+      categoryId: clearCategoryId ? null : (categoryId ?? this.categoryId),
       modality: modality ?? this.modality,
       zone: zone ?? this.zone,
     );

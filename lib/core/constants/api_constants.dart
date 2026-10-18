@@ -37,8 +37,14 @@ class ApiConstants {
   /// Endpoint para consulta y actualización de perfil del asistente (CU-02 / HU-03).
   static const String profileEndpoint = '/users/me';
 
+  /// Endpoint base para detalle y gestión de experiencias.
+  static const String experiencesEndpoint = '/experiences';
+
   /// Endpoint para exploración de catálogo de experiencias (CU-04 / HU-05).
-  static const String experiencesEndpoint = '/experiences/catalog';
+  static const String experiencesCatalogEndpoint = '/experiences/catalog';
+
+  /// Endpoint para consulta de categorías temáticas (CU-04 / CU-05).
+  static const String categoriesEndpoint = '/categories';
 
   /// Endpoint para creación de reservas y pago de cupos (CU-05 / HU-06).
   static const String bookingsEndpoint = '/bookings';

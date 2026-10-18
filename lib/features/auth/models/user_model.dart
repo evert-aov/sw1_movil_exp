@@ -114,4 +114,22 @@ class UserModel {
       'interests': interests,
     };
   }
+
+  /// Genera el mapa JSON estricto permitido por el backend en `PUT /api/users/me` (`ProfileUpdateDTO`).
+  ///
+  /// Evita enviar campos adicionales (`id`, `email`, `city`, `zone`) que provocarían
+  /// un error 422 Unprocessable Entity por la restricción `extra="forbid"`.
+  Map<String, dynamic> toUpdateJson() {
+    return <String, dynamic>{
+      'first_name': firstName,
+      if (lastName != null && lastName!.trim().isNotEmpty)
+        'last_name': lastName!.trim(),
+      if (phone != null && phone!.trim().isNotEmpty)
+        'phone': phone!.trim(),
+      if (avatarUrl != null && avatarUrl!.trim().isNotEmpty)
+        'avatar_url': avatarUrl!.trim(),
+      'bio': bio,
+      'interests': interests,
+    };
+  }
 }
