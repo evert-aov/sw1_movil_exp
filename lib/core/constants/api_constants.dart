@@ -29,7 +29,8 @@ class ApiConstants {
   }
 
   /// Endpoint para inicio de sesión de asistentes (CU-01 / HU-02).
-  static const String loginEndpoint = '/auth/login';
+  static const String loginEndpoint = '/auth/mobile/login';
+  static const String logoutEndpoint = '/auth/logout';
 
   /// Endpoint para registro de nuevos asistentes (CU-01 / HU-01).
   static const String registerEndpoint = '/auth/register';

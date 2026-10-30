@@ -72,11 +72,12 @@ class HttpClient {
   Future<dynamic> get(
     String endpoint, {
     Map<String, String>? queryParameters,
+    Map<String, String> headers = const <String, String>{},
   }) async {
     try {
       final response = await _client.get(
         _buildUri(endpoint, queryParameters),
-        headers: _buildHeaders(),
+        headers: <String, String>{..._buildHeaders(), ...headers},
       );
       return _handleResponse(response);
     } catch (e) {
@@ -90,12 +91,13 @@ class HttpClient {
   /// Retorna el cuerpo JSON decodificado o lanza [ApiException] en caso de error.
   Future<dynamic> post(
     String endpoint,
-    Map<String, dynamic> body,
-  ) async {
+    Map<String, dynamic> body, {
+    Map<String, String> headers = const <String, String>{},
+  }) async {
     try {
       final response = await _client.post(
         _buildUri(endpoint),
-        headers: _buildHeaders(),
+        headers: <String, String>{..._buildHeaders(), ...headers},
         body: jsonEncode(body),
       );
       return _handleResponse(response);
@@ -108,10 +110,7 @@ class HttpClient {
   /// Ejecuta una petición HTTP PUT real hacia el [endpoint] para actualizar recursos.
   ///
   /// Recibe el [body] con los campos actualizados y retorna la respuesta JSON decodificada.
-  Future<dynamic> put(
-    String endpoint,
-    Map<String, dynamic> body,
-  ) async {
+  Future<dynamic> put(String endpoint, Map<String, dynamic> body) async {
     try {
       final response = await _client.put(
         _buildUri(endpoint),
@@ -125,6 +124,16 @@ class HttpClient {
     }
   }
 
+  Future<dynamic> patch(String endpoint, Map<String, dynamic> body) async {
+    final response = await _client.patch(_buildUri(endpoint), headers: _buildHeaders(), body: jsonEncode(body));
+    return _handleResponse(response);
+  }
+
+  Future<dynamic> delete(String endpoint) async {
+    final response = await _client.delete(_buildUri(endpoint), headers: _buildHeaders());
+    return _handleResponse(response);
+  }
+
   /// Evalúa el código de estado de [response] y decodifica el cuerpo JSON.
   dynamic _handleResponse(http.Response response) {
     final String rawBody = utf8.decode(response.bodyBytes);
@@ -136,11 +145,12 @@ class HttpClient {
 
     String errorMessage = 'Error HTTP ${response.statusCode}';
     if (decoded is Map<String, dynamic>) {
-      errorMessage = (decoded['detail'] ??
-              decoded['message'] ??
-              decoded['error'] ??
-              errorMessage)
-          .toString();
+      errorMessage =
+          (decoded['detail'] ??
+                  decoded['message'] ??
+                  decoded['error'] ??
+                  errorMessage)
+              .toString();
     }
     throw ApiException(errorMessage, statusCode: response.statusCode);
   }

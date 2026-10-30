@@ -41,6 +41,7 @@ class ExperienceModel {
 
   /// Cantidad actual de cupos reservados o comprometidos.
   final int reservedSlots;
+  final int heldSlots;
 
   /// Fecha y hora programada para el inicio del evento.
   final DateTime eventDate;
@@ -69,6 +70,7 @@ class ExperienceModel {
     required this.minCapacity,
     required this.maxCapacity,
     required this.reservedSlots,
+    this.heldSlots = 0,
     required this.eventDate,
     this.durationMinutes = 120,
     this.virtualMeetingUrl,
@@ -83,11 +85,12 @@ class ExperienceModel {
       (minCapacity - reservedSlots).clamp(0, minCapacity);
 
   /// Calcula cuántos cupos disponibles quedan antes de agotar el aforo máximo ([maxCapacity]).
-  int get availableSlots => (maxCapacity - reservedSlots).clamp(0, maxCapacity);
+  int get availableSlots =>
+      (maxCapacity - reservedSlots - heldSlots).clamp(0, maxCapacity);
 
-  /// Calcula el porcentaje normalizado (0.0 a 1.0) de ocupación respecto al aforo máximo.
+  /// Calcula el porcentaje normalizado (0.0 a 1.0) respecto al quórum mínimo pagado.
   double get quorumProgress =>
-      maxCapacity > 0 ? (reservedSlots / maxCapacity).clamp(0.0, 1.0) : 0.0;
+      minCapacity > 0 ? (reservedSlots / minCapacity).clamp(0.0, 1.0) : 0.0;
 
   /// Construye una instancia de [ExperienceModel] a partir de un mapa JSON.
   factory ExperienceModel.fromJson(Map<String, dynamic> json) {
@@ -105,7 +108,9 @@ class ExperienceModel {
       minCapacity: json['min_capacity'] as int? ?? 5,
       maxCapacity: json['max_capacity'] as int? ?? 10,
       reservedSlots: json['reserved_slots'] as int? ?? 0,
-      eventDate: DateTime.tryParse(json['event_date'] as String? ?? '') ??
+      heldSlots: json['held_slots'] as int? ?? 0,
+      eventDate:
+          DateTime.tryParse(json['event_date'] as String? ?? '') ??
           DateTime.now().add(const Duration(days: 7)),
       durationMinutes: json['duration_minutes'] as int? ?? 120,
       virtualMeetingUrl: json['virtual_meeting_url'] as String?,
@@ -129,6 +134,7 @@ class ExperienceModel {
       'min_capacity': minCapacity,
       'max_capacity': maxCapacity,
       'reserved_slots': reservedSlots,
+      'held_slots': heldSlots,
       'event_date': eventDate.toIso8601String(),
       'duration_minutes': durationMinutes,
       'virtual_meeting_url': virtualMeetingUrl,

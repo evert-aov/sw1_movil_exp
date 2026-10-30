@@ -1,5 +1,7 @@
 # EXPERIENCIA — Aplicación Móvil y Multiplataforma (Flutter)
 
+> Documentación vigente: [guía del desarrollador](guia-desarrollador/README.md). CU-01 reúne registro y sesión; perfil es CU-02. El logout solicita revocación remota; el recorrido de reservas/matching del cliente sigue pendiente.
+
 Aplicación cliente desarrollada en **Flutter con Dart**, orientada a los **asistentes** para la exploración interactiva de eventos y actividades, seguimiento de quórum en tiempo real, gestión de perfil y consumo de servicios remotos de la plataforma **EXPERIENCIA**.
 
 Soporta ejecución multiplataforma nativa (**Android**, **Linux Desktop**, **iOS**, **macOS**, **Windows** y **Web**) adaptando sus interfaces tanto a pantallas móviles compactas como a monitores de escritorio.

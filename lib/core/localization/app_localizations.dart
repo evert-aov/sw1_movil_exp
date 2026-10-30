@@ -11,11 +11,24 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'es': {
+      'advanced_filters': 'Fechas y cercanía',
+      'date_from': 'Desde (Bolivia)',
+      'date_to': 'Hasta (Bolivia)',
+      'latitude': 'Latitud',
+      'longitude': 'Longitud',
+      'radius_km': 'Radio (km)',
+      'only_available': 'Solo con cupos disponibles',
+      'clear_filters': 'Limpiar',
+      'apply_filters': 'Aplicar',
+      'invalid_filters': 'Revisa fechas, coordenadas y radio.',
       'app_title': 'EXPERIENCIA',
       'app_subtitle': 'Experiencias que responden • Descubre y Conecta',
-      'hero_tagline': 'EXPERIENCIAS QUE RESPONDEN · DESCUBRIR · CONECTAR · OPTIMIZAR',
-      'hero_title': 'Conecta experiencias,\noptimiza audiencias\nen tiempo real',
-      'hero_description': 'Una plataforma inteligente para descubrir momentos únicos y conectar con grupos afines, resguardando siempre tu privacidad.',
+      'hero_tagline':
+          'EXPERIENCIAS QUE RESPONDEN · DESCUBRIR · CONECTAR · OPTIMIZAR',
+      'hero_title':
+          'Conecta experiencias,\noptimiza audiencias\nen tiempo real',
+      'hero_description':
+          'Una plataforma inteligente para descubrir momentos únicos y conectar con grupos afines, resguardando siempre tu privacidad.',
       'feature_1_title': 'Matching Grupal Dinámico',
       'feature_1_desc': 'Alcanza el quórum mínimo viable automáticamente',
       'feature_2_title': 'Visión Efímera en RAM',
@@ -27,7 +40,8 @@ class AppLocalizations {
       'welcome_badge': 'BIENVENIDO A EXPERIENCIA',
       'login_header': 'Accede a tu cuenta.',
       'register_header': 'Crea tu acceso.',
-      'auth_subtitle': 'Únete como asistente para explorar y reservar experiencias en cualquier dispositivo.',
+      'auth_subtitle':
+          'Únete como asistente para explorar y reservar experiencias en cualquier dispositivo.',
       'tab_login': 'Iniciar sesión',
       'tab_register': 'Crear cuenta',
       'label_fullname': 'Nombre completo',
@@ -46,18 +60,26 @@ class AppLocalizations {
       'attendee_role_desc': 'Descubrir y reservar',
       'btn_login': 'Iniciar sesión',
       'btn_register': 'Crear mi cuenta',
-      'terms_footer': 'Al continuar aceptas nuestros Términos de uso y Política de privacidad.',
-      'validation_error': 'Por favor completa un correo válido y una contraseña de al menos 6 caracteres.',
-      'validation_register_error': 'Por favor ingresa tu nombre completo, correo válido y contraseña.',
+      'terms_footer':
+          'Al continuar aceptas nuestros Términos de uso y Política de privacidad.',
+      'validation_error':
+          'Por favor completa un correo válido y una contraseña de al menos 6 caracteres.',
+      'validation_register_error':
+          'Por favor ingresa tu nombre completo, correo válido y contraseña.',
       'api_error_prefix': 'No se pudo conectar con el servidor API:',
       'btn_retry': 'Reintentar conexión',
       'search_hint': 'Buscar eventos, talleres, catas, zonas...',
-      'quorum_banner_text': 'Quórum Mínimo: Tu reserva activa el evento cuando se alcanza la meta de asistentes.',
+      'quorum_banner_text':
+          'Quórum Mínimo: Tu reserva activa el evento cuando se alcanza la meta de asistentes.',
       'quorum_dialog_title': '¿Cómo funciona el Quórum?',
-      'quorum_dialog_intro': 'EXPERIENCIA garantiza que ningún evento se cancele de imprevisto:',
-      'quorum_dialog_p1': 'Cada actividad tiene un Quórum Mínimo de asistentes necesarios para que el evento se confirme.',
-      'quorum_dialog_p2': 'Las reservas suman al indicador de la barra en tiempo real. Al llegar a la meta, el evento queda CONFIRMADO.',
-      'quorum_dialog_p3': 'Si la fecha límite llega sin alcanzar el quórum, tu reserva queda protegida al 100% sin cargos.',
+      'quorum_dialog_intro':
+          'EXPERIENCIA garantiza que ningún evento se cancele de imprevisto:',
+      'quorum_dialog_p1':
+          'Cada actividad tiene un Quórum Mínimo de asistentes necesarios para que el evento se confirme.',
+      'quorum_dialog_p2':
+          'Las reservas suman al indicador de la barra en tiempo real. Al llegar a la meta, el evento queda CONFIRMADO.',
+      'quorum_dialog_p3':
+          'Si la fecha límite llega sin alcanzar el quórum, tu reserva queda protegida al 100% sin cargos.',
       'btn_understood': 'Entendido',
       'mod_all': 'Todos',
       'mod_in_person': 'Presencial',
@@ -66,7 +88,8 @@ class AppLocalizations {
       'cat_all': 'Todos',
       'available_events': 'Experiencias Disponibles',
       'no_events_title': 'No hay experiencias disponibles',
-      'no_events_subtitle': 'El catálogo está vacío o no existen resultados para los filtros aplicados.',
+      'no_events_subtitle':
+          'El catálogo está vacío o no existen resultados para los filtros aplicados.',
       'status_confirmed': 'Confirmado por Quórum',
       'status_pending_slots': 'Faltan cupos para quórum:',
       'min_goal': 'Meta mín',
@@ -78,8 +101,10 @@ class AppLocalizations {
       'about_event': 'Sobre esta experiencia',
       'exact_address': 'Dirección del encuentro',
       'price_currency': 'Bs.',
-      'quorum_confirmed_desc': 'Este evento ya alcanzó el mínimo de asistentes requerido y se realizará con total certeza.',
-      'quorum_pending_desc': 'Tu participación ayudará a alcanzar la meta mínima para activar esta experiencia.',
+      'quorum_confirmed_desc':
+          'Este evento ya alcanzó el mínimo de asistentes requerido y se realizará con total certeza.',
+      'quorum_pending_desc':
+          'Tu participación ayudará a alcanzar la meta mínima para activar esta experiencia.',
       'profile_title': 'Mi Perfil de Asistente',
       'label_city': 'Ciudad',
       'hint_city': 'Ingresa tu ciudad',
@@ -90,8 +115,10 @@ class AppLocalizations {
       'label_bio': 'Biografía',
       'hint_bio': 'Cuéntale a la comunidad un poco sobre ti...',
       'interests_title': 'Intereses y preferencias',
-      'interests_subtitle': 'Selecciona o agrega los temas que afinan tu catálogo.',
-      'interests_empty': 'Aún no has agregado intereses. Escribe uno abajo para comenzar.',
+      'interests_subtitle':
+          'Selecciona o agrega los temas que afinan tu catálogo.',
+      'interests_empty':
+          'Aún no has agregado intereses. Escribe uno abajo para comenzar.',
       'hint_add_interest': 'Escribe un interés y presiona el botón agregar',
       'btn_save_changes': 'Guardar cambios',
       'profile_saved_toast': 'Perfil actualizado en el servidor correctamente.',
@@ -100,11 +127,22 @@ class AppLocalizations {
       'btn_logout': 'Cerrar sesión',
     },
     'en': {
+      'advanced_filters': 'Dates and nearby search',
+      'date_from': 'From (Bolivia)',
+      'date_to': 'Until (Bolivia)',
+      'latitude': 'Latitude',
+      'longitude': 'Longitude',
+      'radius_km': 'Radius (km)',
+      'only_available': 'Available slots only',
+      'clear_filters': 'Clear',
+      'apply_filters': 'Apply',
+      'invalid_filters': 'Check dates, coordinates and radius.',
       'app_title': 'EXPERIENCIA',
       'app_subtitle': 'Responsive Experiences • Discover & Connect',
       'hero_tagline': 'RESPONSIVE EXPERIENCES · DISCOVER · CONNECT · OPTIMIZE',
       'hero_title': 'Connect experiences,\noptimize audiences\nin real time',
-      'hero_description': 'An intelligent platform to discover unique moments and connect with like-minded groups while strictly protecting your privacy.',
+      'hero_description':
+          'An intelligent platform to discover unique moments and connect with like-minded groups while strictly protecting your privacy.',
       'feature_1_title': 'Dynamic Group Matching',
       'feature_1_desc': 'Reach the minimum viable quorum automatically',
       'feature_2_title': 'Ephemeral RAM Vision',
@@ -116,7 +154,8 @@ class AppLocalizations {
       'welcome_badge': 'WELCOME TO EXPERIENCIA',
       'login_header': 'Sign in to your account.',
       'register_header': 'Create your access.',
-      'auth_subtitle': 'Join as an attendee to explore and book experiences across any device.',
+      'auth_subtitle':
+          'Join as an attendee to explore and book experiences across any device.',
       'tab_login': 'Sign In',
       'tab_register': 'Create Account',
       'label_fullname': 'Full Name',
@@ -135,18 +174,26 @@ class AppLocalizations {
       'attendee_role_desc': 'Discover and book',
       'btn_login': 'Sign In',
       'btn_register': 'Create My Account',
-      'terms_footer': 'By continuing, you agree to our Terms of Use and Privacy Policy.',
-      'validation_error': 'Please enter a valid email and a password of at least 6 characters.',
-      'validation_register_error': 'Please enter your full name, a valid email, and password.',
+      'terms_footer':
+          'By continuing, you agree to our Terms of Use and Privacy Policy.',
+      'validation_error':
+          'Please enter a valid email and a password of at least 6 characters.',
+      'validation_register_error':
+          'Please enter your full name, a valid email, and password.',
       'api_error_prefix': 'Could not connect to the API server:',
       'btn_retry': 'Retry connection',
       'search_hint': 'Search events, workshops, tastings, zones...',
-      'quorum_banner_text': 'Minimum Quorum: Your booking activates the event once the attendee goal is reached.',
+      'quorum_banner_text':
+          'Minimum Quorum: Your booking activates the event once the attendee goal is reached.',
       'quorum_dialog_title': 'How Does Quorum Work?',
-      'quorum_dialog_intro': 'EXPERIENCIA ensures no event is unexpectedly cancelled:',
-      'quorum_dialog_p1': 'Each activity has a Minimum Quorum of attendees required for the host to confirm the event.',
-      'quorum_dialog_p2': 'Bookings add to the live progress bar. Once the goal is reached, the event is CONFIRMED.',
-      'quorum_dialog_p3': 'If the deadline arrives without reaching quorum, your reservation is 100% protected with zero charges.',
+      'quorum_dialog_intro':
+          'EXPERIENCIA ensures no event is unexpectedly cancelled:',
+      'quorum_dialog_p1':
+          'Each activity has a Minimum Quorum of attendees required for the host to confirm the event.',
+      'quorum_dialog_p2':
+          'Bookings add to the live progress bar. Once the goal is reached, the event is CONFIRMED.',
+      'quorum_dialog_p3':
+          'If the deadline arrives without reaching quorum, your reservation is 100% protected with zero charges.',
       'btn_understood': 'Got It',
       'mod_all': 'All',
       'mod_in_person': 'In-Person',
@@ -155,7 +202,8 @@ class AppLocalizations {
       'cat_all': 'All',
       'available_events': 'Available Experiences',
       'no_events_title': 'No experiences available',
-      'no_events_subtitle': 'The catalog is empty or no results match the selected filters.',
+      'no_events_subtitle':
+          'The catalog is empty or no results match the selected filters.',
       'status_confirmed': 'Confirmed by Quorum',
       'status_pending_slots': 'Slots needed for quorum:',
       'min_goal': 'Min goal',
@@ -167,8 +215,10 @@ class AppLocalizations {
       'about_event': 'About this experience',
       'exact_address': 'Venue Address',
       'price_currency': 'Bs.',
-      'quorum_confirmed_desc': 'This event has already reached the minimum required attendees and is guaranteed to take place.',
-      'quorum_pending_desc': 'Your participation will help reach the minimum goal to activate this experience.',
+      'quorum_confirmed_desc':
+          'This event has already reached the minimum required attendees and is guaranteed to take place.',
+      'quorum_pending_desc':
+          'Your participation will help reach the minimum goal to activate this experience.',
       'profile_title': 'Attendee Profile',
       'label_city': 'City',
       'hint_city': 'Enter your city',
@@ -179,8 +229,10 @@ class AppLocalizations {
       'label_bio': 'Biography',
       'hint_bio': 'Tell the community a little about yourself...',
       'interests_title': 'Interests & Preferences',
-      'interests_subtitle': 'Select or add topics that tailor your experience catalog.',
-      'interests_empty': 'No interests added yet. Type one below to get started.',
+      'interests_subtitle':
+          'Select or add topics that tailor your experience catalog.',
+      'interests_empty':
+          'No interests added yet. Type one below to get started.',
       'hint_add_interest': 'Type an interest and press the add button',
       'btn_save_changes': 'Save Changes',
       'profile_saved_toast': 'Profile updated on the server successfully.',

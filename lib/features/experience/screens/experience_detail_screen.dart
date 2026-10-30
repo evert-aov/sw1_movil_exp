@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/experience_model.dart';
+import '../../booking/screens/checkout_screen.dart';
+import '../../matching/screens/matching_screen.dart';
 
 /// Vista de Detalle de una Experiencia para el Usuario Asistente (Sprint 1 • CU-04 / CU-05).
 ///
@@ -83,9 +85,7 @@ class ExperienceDetailScreen extends StatelessWidget {
                   width: 42,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkBorder
-                        : Colors.grey.shade300,
+                    color: isDark ? AppColors.darkBorder : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -351,6 +351,11 @@ class ExperienceDetailScreen extends StatelessWidget {
 
                 const SizedBox(height: 16),
 
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute<void>(
+                    builder: (_) => MatchingScreen(experienceId: experience.id))),
+                  icon: const Icon(Icons.groups_outlined), label: const Text('Buscar grupo por afinidad'),
+                ),
                 Text(
                   i18n.tr('about_event'),
                   style: TextStyle(
@@ -454,7 +459,12 @@ class ExperienceDetailScreen extends StatelessWidget {
                   ],
                 ),
                 FilledButton.icon(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) =>
+                          CheckoutScreen(experienceId: experience.id),
+                    ),
+                  ),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primaryViolet,
                     foregroundColor: Colors.white,
@@ -468,7 +478,7 @@ class ExperienceDetailScreen extends StatelessWidget {
                   ),
                   icon: const Icon(Icons.check_circle_outline, size: 18),
                   label: Text(
-                    i18n.tr('btn_understood'),
+                    'Reservar entradas',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,

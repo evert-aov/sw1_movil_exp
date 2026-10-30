@@ -3,140 +3,108 @@ import '../../../core/network/http_client.dart';
 import '../models/auth_credentials_model.dart';
 import '../models/user_model.dart';
 
-/// Servicio de dominio encargado de la autenticación y perfil del Usuario Asistente (CU-01, CU-02).
-///
-/// Diseñado con bajo acoplamiento mediante inyección de [HttpClient] y sin datos
-/// harcodeados: toda la identidad y perfil provienen de las respuestas del servidor API.
+/// La sesión móvil requiere ATTENDEE explícito y se confirma con el perfil del servidor.
 class AuthService {
   final HttpClient _httpClient;
-
-  /// Usuario asistente autenticado en la sesión actual, obtenido desde el backend.
   static UserModel? _currentUser;
-
-  /// Crea una instancia de [AuthService] recibiendo opcionalmente un [HttpClient].
   AuthService({HttpClient? httpClient})
-      : _httpClient = httpClient ?? HttpClient();
-
-  /// Retorna el perfil en caché de la sesión activa o `null` si no ha iniciado sesión.
+    : _httpClient = httpClient ?? HttpClient();
   UserModel? get currentUser => _currentUser;
-
-  /// Indica si existe una sesión autenticada activa.
   bool get isAuthenticated =>
-      _currentUser != null || HttpClient.authToken != null;
+      _currentUser?.canUseMobile == true && HttpClient.authToken != null;
 
-  /// Autentica a un asistente en el backend mediante sus [credentials] de acceso (CU-01 / HU-02).
-  ///
-  /// Extrae el token JWT si es devuelto por la API y carga el [UserModel] correspondiente.
+  void clearSession() {
+    HttpClient.setAuthToken(null);
+    _currentUser = null;
+  }
+
+  UserModel _acceptProfile(UserModel user) {
+    if (!user.canUseMobile) {
+      clearSession();
+      throw const ApiException(
+        'La app móvil requiere el rol ATTENDEE. Usa la web para gestionar tu cuenta de anfitrión o administrador.',
+        statusCode: 403,
+      );
+    }
+    _currentUser = user;
+    return user;
+  }
+
   Future<UserModel> login(AuthCredentialsModel credentials) async {
-    final dynamic response = await _httpClient.post(
-      ApiConstants.loginEndpoint,
-      credentials.toJson(),
-    );
-
-    if (response is Map<String, dynamic>) {
-      final String? token = (response['access_token'] ??
-          response['token'] ??
-          response['jwt']) as String?;
-      if (token != null) {
-        HttpClient.setAuthToken(token);
+    clearSession();
+    try {
+      final response = await _httpClient.post(
+        ApiConstants.loginEndpoint,
+        credentials.toJson(),
+      );
+      if (response is! Map<String, dynamic> ||
+          response['access_token'] is! String ||
+          (response['access_token'] as String).isEmpty) {
+        throw const ApiException('No se recibió una sesión válida.');
       }
-
-      if (response['user'] is Map<String, dynamic>) {
-        _currentUser = UserModel.fromJson(
-          response['user'] as Map<String, dynamic>,
-        );
-        return _currentUser!;
-      }
-
-      if (response.containsKey('email') || response.containsKey('first_name')) {
-        _currentUser = UserModel.fromJson(response);
-        return _currentUser!;
-      }
+      HttpClient.setAuthToken(response['access_token'] as String);
+      // El token no sustituye al perfil ni a sus roles actuales.
+      return await fetchProfile();
+    } catch (_) {
+      clearSession();
+      rethrow;
     }
-
-    return fetchProfile();
   }
 
-  /// Registra una nueva cuenta de Usuario Asistente en el backend (CU-01 / HU-01).
-  ///
-  /// Envía [credentials] al endpoint de registro y retorna el [UserModel] creado por el servidor.
   Future<UserModel> register(AuthCredentialsModel credentials) async {
-    final dynamic response = await _httpClient.post(
-      ApiConstants.registerEndpoint,
-      credentials.toJson(),
-    );
-
-    if (response is Map<String, dynamic>) {
-      final String? token = (response['access_token'] ??
-          response['token'] ??
-          response['jwt']) as String?;
-      if (token != null) {
-        HttpClient.setAuthToken(token);
-      } else {
-        // El endpoint /auth/register del backend retorna ProfileDTO sin token JWT.
-        // Se realiza login automático con las credenciales para adquirir el JWT y abrir la sesión.
-        try {
-          return await login(credentials);
-        } catch (_) {
-          // Si el login falla, conserva el perfil retornado por el registro.
-        }
-      }
-
-      if (response['user'] is Map<String, dynamic>) {
-        _currentUser = UserModel.fromJson(
-          response['user'] as Map<String, dynamic>,
-        );
-        return _currentUser!;
-      }
-
-      _currentUser = UserModel.fromJson(response);
-      return _currentUser!;
-    }
-
-    return fetchProfile();
+    await _httpClient.post(ApiConstants.registerEndpoint, {
+      ...credentials.toJson(),
+      'role': 'ATTENDEE',
+    });
+    return login(credentials);
   }
 
-  /// Consulta los datos actualizados del perfil del asistente desde el servidor (`GET /users/me`).
   Future<UserModel> fetchProfile() async {
-    final dynamic response = await _httpClient.get(
-      ApiConstants.profileEndpoint,
-    );
-    if (response is Map<String, dynamic>) {
-      final Map<String, dynamic> data =
-          response['data'] is Map<String, dynamic>
-              ? response['data'] as Map<String, dynamic>
-              : response;
-      _currentUser = UserModel.fromJson(data);
-      return _currentUser!;
+    try {
+      final response = await _httpClient.get(ApiConstants.profileEndpoint);
+      if (response is! Map<String, dynamic>) {
+        throw const ApiException(
+          'Formato de perfil inválido recibido del servidor.',
+        );
+      }
+      final data = response['data'] is Map<String, dynamic>
+          ? response['data'] as Map<String, dynamic>
+          : response;
+      return _acceptProfile(UserModel.fromJson(data));
+    } on ApiException catch (error) {
+      if (error.statusCode == 401 || error.statusCode == 403) clearSession();
+      rethrow;
     }
-    throw const ApiException('Formato de perfil inválido recibido del servidor.');
   }
 
-  /// Actualiza los datos personales, ubicación, biografía e intereses en el backend (CU-02 / HU-03).
-  ///
-  /// Envía [updatedUser] mediante `PUT /users/me` y retorna la entidad confirmada por el servidor.
   Future<UserModel> updateProfile(UserModel updatedUser) async {
-    final dynamic response = await _httpClient.put(
+    final response = await _httpClient.put(
       ApiConstants.profileEndpoint,
       updatedUser.toUpdateJson(),
     );
-
-    if (response is Map<String, dynamic>) {
-      final Map<String, dynamic> data =
-          response['data'] is Map<String, dynamic>
-              ? response['data'] as Map<String, dynamic>
-              : response;
-      _currentUser = UserModel.fromJson(data);
-      return _currentUser!;
+    if (response is! Map<String, dynamic>) {
+      throw const ApiException(
+        'Formato de perfil inválido recibido del servidor.',
+      );
     }
-
-    _currentUser = updatedUser;
-    return _currentUser!;
+    final data = response['data'] is Map<String, dynamic>
+        ? response['data'] as Map<String, dynamic>
+        : response;
+    return _acceptProfile(UserModel.fromJson(data));
   }
 
-  /// Cierra la sesión actual limpiando el token JWT y la referencia del usuario en memoria.
-  void logout() {
-    HttpClient.setAuthToken(null);
-    _currentUser = null;
+  Future<bool> logout() async {
+    try {
+      if (HttpClient.authToken != null) {
+        await _httpClient
+            .post(ApiConstants.logoutEndpoint, <String, dynamic>{})
+            .timeout(const Duration(seconds: 5));
+      }
+      return true;
+    } catch (_) {
+      return false;
+    } finally {
+      clearSession();
+    }
   }
 }

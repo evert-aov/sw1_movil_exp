@@ -9,6 +9,8 @@ import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/profile_screen.dart';
 import 'features/auth/services/auth_service.dart';
 import 'features/experience/screens/catalog_screen.dart';
+import 'features/booking/screens/my_tickets_screen.dart';
+import 'features/notifications/notifications_screen.dart';
 
 /// Punto de entrada principal multiplataforma de EXPERIENCIA (Android, iOS, Web, Windows, macOS, Linux).
 void main() {
@@ -25,7 +27,8 @@ class ExperienciaApp extends StatefulWidget {
   State<ExperienciaApp> createState() => _ExperienciaAppState();
 }
 
-class _ExperienciaAppState extends State<ExperienciaApp> {
+class _ExperienciaAppState extends State<ExperienciaApp>
+    with WidgetsBindingObserver {
   final ThemeController _themeController = ThemeController();
   final LocaleController _localeController = LocaleController();
   final AuthService _authService = AuthService();
@@ -35,14 +38,36 @@ class _ExperienciaAppState extends State<ExperienciaApp> {
   @override
   void initState() {
     super.initState();
-    _currentUser = _authService.currentUser;
+    WidgetsBinding.instance.addObserver(this);
+    _currentUser = _authService.currentUser?.canUseMobile == true
+        ? _authService.currentUser
+        : null;
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _themeController.dispose();
     _localeController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _currentUser != null) {
+      _verifyMobileAccess();
+    }
+  }
+
+  Future<void> _verifyMobileAccess() async {
+    try {
+      final user = await _authService.fetchProfile();
+      if (mounted) setState(() => _currentUser = user);
+    } catch (_) {
+      if (!_authService.isAuthenticated && mounted) {
+        setState(() => _currentUser = null);
+      }
+    }
   }
 
   @override
@@ -64,14 +89,14 @@ class _ExperienciaAppState extends State<ExperienciaApp> {
           darkTheme: AppTheme.darkTheme,
           themeMode: _themeController.themeMode,
           locale: _localeController.locale,
-          home: _currentUser == null
+          home: _currentUser == null || !_authService.isAuthenticated
               ? LoginScreen(
                   i18n: i18n,
                   onToggleTheme: _themeController.toggleTheme,
                   onToggleLanguage: _localeController.toggleLocale,
                   onAuthenticated: (UserModel user) {
                     setState(() {
-                      _currentUser = user;
+                      _currentUser = user.canUseMobile ? user : null;
                     });
                   },
                 )
@@ -79,8 +104,9 @@ class _ExperienciaAppState extends State<ExperienciaApp> {
                   i18n: i18n,
                   onToggleTheme: _themeController.toggleTheme,
                   onToggleLanguage: _localeController.toggleLocale,
-                  onLogout: () {
-                    _authService.logout();
+                  onLogout: () async {
+                    await _authService.logout();
+                    if (!mounted) return;
                     setState(() {
                       _currentUser = null;
                     });
@@ -106,7 +132,7 @@ class MainNavigationScreen extends StatefulWidget {
   final VoidCallback onToggleLanguage;
 
   /// Acción para cerrar sesión y volver a la pantalla inicial de Login.
-  final VoidCallback onLogout;
+  final Future<void> Function() onLogout;
 
   /// Crea una instancia de [MainNavigationScreen].
   const MainNavigationScreen({
@@ -147,6 +173,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ),
         ),
       ),
+      const MyTicketsScreen(),
+      NotificationsScreen(i18n: i18n),
     ];
 
     return Scaffold(
@@ -247,6 +275,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               color: AppColors.primaryVioletLight,
             ),
             label: i18n.tr('nav_profile'),
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.confirmation_number_outlined),
+            label: 'Entradas',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.notifications_outlined),
+            label: 'Avisos',
           ),
         ],
       ),

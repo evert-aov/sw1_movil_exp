@@ -14,7 +14,7 @@ class ProfileScreen extends StatefulWidget {
   final AppLocalizations i18n;
 
   /// Callback para cerrar la sesión actual.
-  final VoidCallback onLogout;
+  final Future<void> Function() onLogout;
 
   /// Callback para alternar entre tema claro y oscuro.
   final VoidCallback onToggleTheme;
@@ -146,12 +146,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _errorMessage = null;
     });
 
-    final UserModel baseUser = _user ??
-        const UserModel(
-          id: '',
-          firstName: '',
-          email: '',
-        );
+    final UserModel baseUser =
+        _user ?? const UserModel(id: '', firstName: '', email: '');
 
     final UserModel updated = baseUser.copyWith(
       firstName: _firstNameController.text.trim(),
@@ -355,9 +351,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextField(
                 controller: _bioController,
                 maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: i18n.tr('hint_bio'),
-                ),
+                decoration: InputDecoration(hintText: i18n.tr('hint_bio')),
               ),
 
               const Padding(
@@ -476,10 +470,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   TextButton.icon(
-                    onPressed: () {
-                      _authService.logout();
-                      widget.onLogout();
-                    },
+                    onPressed: widget.onLogout,
                     icon: const Icon(
                       Icons.logout_rounded,
                       size: 17,

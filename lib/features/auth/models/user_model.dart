@@ -32,6 +32,10 @@ class UserModel {
 
   /// Lista de etiquetas de intereses temáticos del asistente.
   final List<String> interests;
+  final List<String> roles;
+
+  bool get canUseMobile =>
+      roles.any((role) => role.toUpperCase() == 'ATTENDEE');
 
   /// Construye una instancia inmutable de [UserModel].
   const UserModel({
@@ -45,6 +49,7 @@ class UserModel {
     this.bio = '',
     this.avatarUrl,
     this.interests = const <String>[],
+    this.roles = const <String>[],
   });
 
   /// Retorna el nombre completo concatenando [firstName] y [lastName].
@@ -78,6 +83,7 @@ class UserModel {
       bio: bio ?? this.bio,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       interests: interests ?? List<String>.from(this.interests),
+      roles: roles,
     );
   }
 
@@ -88,6 +94,11 @@ class UserModel {
       firstName: json['first_name'] as String? ?? '',
       lastName: json['last_name'] as String?,
       email: json['email'] as String? ?? '',
+      roles: List<String>.unmodifiable(
+        (json['roles'] as List<dynamic>? ?? const []).map(
+          (role) => role.toString().toUpperCase(),
+        ),
+      ),
       phone: json['phone'] as String?,
       city: json['city'] as String? ?? '',
       zone: json['zone'] as String? ?? '',
@@ -112,6 +123,7 @@ class UserModel {
       'bio': bio,
       'avatar_url': avatarUrl,
       'interests': interests,
+      'roles': roles,
     };
   }
 
@@ -124,8 +136,7 @@ class UserModel {
       'first_name': firstName,
       if (lastName != null && lastName!.trim().isNotEmpty)
         'last_name': lastName!.trim(),
-      if (phone != null && phone!.trim().isNotEmpty)
-        'phone': phone!.trim(),
+      if (phone != null && phone!.trim().isNotEmpty) 'phone': phone!.trim(),
       if (avatarUrl != null && avatarUrl!.trim().isNotEmpty)
         'avatar_url': avatarUrl!.trim(),
       'bio': bio,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/network/http_client.dart';
@@ -17,10 +18,7 @@ class CatalogScreen extends StatefulWidget {
   final AppLocalizations i18n;
 
   /// Crea una instancia de [CatalogScreen].
-  const CatalogScreen({
-    super.key,
-    required this.i18n,
-  });
+  const CatalogScreen({super.key, required this.i18n});
 
   @override
   State<CatalogScreen> createState() => _CatalogScreenState();
@@ -32,6 +30,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
   List<ExperienceModel> _experiences = <ExperienceModel>[];
   List<String> _dynamicCategories = <String>['Todos'];
   bool _isLoading = true;
+  int _requestSequence = 0;
+  Timer? _searchDebounce;
   String? _errorMessage;
 
   ExperienceFilterModel _filter = const ExperienceFilterModel();
@@ -44,6 +44,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   /// Consulta el catálogo en [ExperienceService.getCatalog] y extrae las categorías disponibles de los datos recibidos.
   Future<void> _loadCatalog() async {
+    final request = ++_requestSequence;
+    final filter = _filter;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -64,9 +66,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
         }
       }
 
-      final List<ExperienceModel> data = await _service.getCatalog(_filter);
-      if (mounted) {
-        final Set<String> categorySet = <String>{'Todos', ..._dynamicCategories};
+      final List<ExperienceModel> data = await _service.getCatalog(filter);
+      if (mounted && request == _requestSequence) {
+        final Set<String> categorySet = <String>{
+          'Todos',
+          ..._dynamicCategories,
+        };
         for (final exp in data) {
           if (exp.categoryName.trim().isNotEmpty) {
             categorySet.add(exp.categoryName.trim());
@@ -79,7 +84,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         });
       }
     } on ApiException catch (e) {
-      if (mounted) {
+      if (mounted && request == _requestSequence) {
         setState(() {
           _experiences = <ExperienceModel>[];
           _isLoading = false;
@@ -87,6 +92,148 @@ class _CatalogScreenState extends State<CatalogScreen> {
         });
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    super.dispose();
+  }
+
+  /// Edita fechas y ubicación sin confundir un nombre de zona con coordenadas GPS.
+  Future<void> _showAdvancedFilters() async {
+    final i18n = widget.i18n;
+    DateTime? from = _filter.dateFrom, to = _filter.dateTo;
+    bool available = _filter.onlyAvailable;
+    final latitude = TextEditingController(
+      text: _filter.latitude?.toString() ?? '',
+    );
+    final longitude = TextEditingController(
+      text: _filter.longitude?.toString() ?? '',
+    );
+    final radius = TextEditingController(text: _filter.radiusKm.toString());
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (ctx, update) => AlertDialog(
+          title: Text(i18n.tr('advanced_filters')),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextButton(
+                  onPressed: () async {
+                    final value = await showDatePicker(
+                      context: ctx,
+                      initialDate: from ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                          if (value != null && ctx.mounted) {
+                            update(() => from = value);
+                          }
+                  },
+                  child: Text(
+                    '${i18n.tr('date_from')}: ${from?.toIso8601String().substring(0, 10) ?? '—'}',
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    final value = await showDatePicker(
+                      context: ctx,
+                      initialDate: to ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (value != null && ctx.mounted) {
+                      update(() => to = value);
+                    }
+                  },
+                  child: Text(
+                    '${i18n.tr('date_to')}: ${to?.toIso8601String().substring(0, 10) ?? '—'}',
+                  ),
+                ),
+                TextField(
+                  controller: latitude,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: true,
+                  ),
+                  decoration: InputDecoration(labelText: i18n.tr('latitude')),
+                ),
+                TextField(
+                  controller: longitude,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: true,
+                  ),
+                  decoration: InputDecoration(labelText: i18n.tr('longitude')),
+                ),
+                TextField(
+                  controller: radius,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: i18n.tr('radius_km')),
+                ),
+                SwitchListTile(
+                  title: Text(i18n.tr('only_available')),
+                  value: available,
+                  onChanged: (value) => update(() => available = value),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                from = null;
+                to = null;
+                latitude.clear();
+                longitude.clear();
+                radius.text = '10';
+                available = false;
+                update(() {});
+              },
+              child: Text(i18n.tr('clear_filters')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(i18n.tr('apply_filters')),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (accepted == true && mounted) {
+      final lat = double.tryParse(latitude.text),
+          lon = double.tryParse(longitude.text);
+      final distance = double.tryParse(radius.text);
+      if ((lat == null) != (lon == null) ||
+          (latitude.text.isNotEmpty && lat == null) ||
+          (longitude.text.isNotEmpty && lon == null) ||
+          (lat != null && (lat < -90 || lat > 90)) ||
+          (lon != null && (lon < -180 || lon > 180)) ||
+          distance == null ||
+          distance <= 0 ||
+          (from != null && to != null && from!.isAfter(to!))) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(i18n.tr('invalid_filters'))));
+      } else {
+        _filter = _filter.copyWith(clearAdvanced: true);
+        _filter = _filter.copyWith(
+          dateFrom: from,
+          dateTo: to,
+          latitude: lat,
+          longitude: lon,
+          radiusKm: distance,
+          onlyAvailable: available,
+        );
+        await _loadCatalog();
+      }
+    }
+    latitude.dispose();
+    longitude.dispose();
+    radius.dispose();
   }
 
   /// Muestra un diálogo informativo explicando el funcionamiento del Quórum Mínimo (sin emojis).
@@ -177,10 +324,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       constraints: const BoxConstraints(maxWidth: 680),
-      builder: (BuildContext ctx) => ExperienceDetailScreen(
-        experience: exp,
-        i18n: widget.i18n,
-      ),
+      builder: (BuildContext ctx) =>
+          ExperienceDetailScreen(experience: exp, i18n: widget.i18n),
     );
   }
 
@@ -199,7 +344,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
           TextField(
             onChanged: (String val) {
               _filter = _filter.copyWith(searchQuery: val);
-              _loadCatalog();
+              _searchDebounce?.cancel();
+              _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+                if (mounted) _loadCatalog();
+              });
             },
             decoration: InputDecoration(
               hintText: i18n.tr('search_hint'),
@@ -212,6 +360,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
           const SizedBox(height: 12),
 
+          TextButton.icon(
+            onPressed: _showAdvancedFilters,
+            icon: const Icon(Icons.tune),
+            label: Text(i18n.tr('advanced_filters')),
+          ),
           // Banner explicativo de Quórum Mínimo (solo iconos)
           InkWell(
             onTap: _showQuorumInfoDialog,
@@ -310,8 +463,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     color: isSelected
                         ? Colors.white
                         : (isDark
-                            ? AppColors.darkTextSecondary
-                            : AppColors.lightTextSecondary),
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary),
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -319,8 +472,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
                       color: isSelected
                           ? AppColors.primaryViolet
                           : (isDark
-                              ? AppColors.darkBorder
-                              : AppColors.lightBorder),
+                                ? AppColors.darkBorder
+                                : AppColors.lightBorder),
                     ),
                   ),
                   showCheckmark: false,
@@ -331,12 +484,37 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
           const SizedBox(height: 16),
 
+          if (_service.totalPages > 1)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                IconButton(
+                  onPressed: _isLoading || _filter.page <= 1
+                      ? null
+                      : () {
+                          _filter = _filter.copyWith(page: _filter.page - 1);
+                          _loadCatalog();
+                        },
+                  icon: const Icon(Icons.chevron_left),
+                ),
+                Text('${_filter.page} / ${_service.totalPages}'),
+                IconButton(
+                  onPressed: _isLoading || _filter.page >= _service.totalPages
+                      ? null
+                      : () {
+                          _filter = _filter.copyWith(page: _filter.page + 1);
+                          _loadCatalog();
+                        },
+                  icon: const Icon(Icons.chevron_right),
+                ),
+              ],
+            ),
           // Cabecera de resultados
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text(
-                '${i18n.tr('available_events')} (${_experiences.length})',
+                '${i18n.tr('available_events')} (${_service.totalResults})',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
@@ -456,8 +634,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     spacing: 16,
                     runSpacing: 16,
                     children: _experiences.map((ExperienceModel exp) {
-                      final double cardWidth =
-                          (constraints.maxWidth - 16) / 2;
+                      final double cardWidth = (constraints.maxWidth - 16) / 2;
                       return SizedBox(
                         width: cardWidth,
                         child: ExperienceCard(
@@ -521,8 +698,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
               color: isSelected
                   ? Colors.white
                   : (isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary),
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary),
             ),
             const SizedBox(width: 5),
             Text(
@@ -533,8 +710,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 color: isSelected
                     ? Colors.white
                     : (isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary),
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary),
               ),
             ),
           ],
