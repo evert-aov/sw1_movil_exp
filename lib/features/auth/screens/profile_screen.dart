@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/network/http_client.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../experience/services/experience_service.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 
 /// Pantalla de Gestión de Perfil y Preferencias del Asistente (Sprint 1 • CU-02 / CU-03 / HU-03).
 ///
 /// Obtiene y actualiza dinámicamente los datos del perfil en el servidor mediante [AuthService],
-/// sin emplear nombres, ciudades ni intereses harcodeados.
+/// permitiendo seleccionar intereses estandarizados con un solo toque para un matching óptimo.
 class ProfileScreen extends StatefulWidget {
   /// Diccionario de localización activo (Español / Inglés).
   final AppLocalizations i18n;
@@ -37,6 +38,24 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = AuthService();
+  final ExperienceService _experienceService = ExperienceService();
+
+  static const List<String> _defaultTopics = <String>[
+    'Gastronomía',
+    'Café de especialidad',
+    'Cata y Maridaje',
+    'Arte y Pintura',
+    'Música y Conciertos',
+    'Música en vivo',
+    'DJ y Electrónica',
+    'Talleres y Educación',
+    'Tecnología y Software',
+    'Networking y Negocios',
+    'Bienestar y Outdoors',
+    'Yoga y Mindfulness',
+    'Diseño UI/UX',
+    'Fotografía',
+  ];
 
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
@@ -50,6 +69,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   UserModel? _user;
   List<String> _selectedInterests = <String>[];
+  List<String> _backendCategories = <String>[];
+  List<String> _availableTopics = List<String>.from(_defaultTopics);
   bool _isLoading = true;
   bool _isSaving = false;
   String? _errorMessage;
@@ -58,6 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadProfile();
+    _loadCategories();
   }
 
   @override
@@ -71,6 +93,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _bioController.dispose();
     _customInterestController.dispose();
     super.dispose();
+  }
+
+  /// Sincroniza la lista unificada de temas para selección rápida
+  void _syncAvailableTopics() {
+    final Set<String> all = <String>{
+      ..._defaultTopics,
+      ..._backendCategories.where((String c) => c.isNotEmpty && c != 'Todos'),
+      ..._selectedInterests,
+    };
+    _availableTopics = all.toList();
+  }
+
+  /// Carga dinámicamente las categorías temáticas desde el servidor
+  Future<void> _loadCategories() async {
+    try {
+      final List<Map<String, dynamic>> raw =
+          await _experienceService.getCategories();
+      if (mounted) {
+        final List<String> names = raw
+            .map((Map<String, dynamic> item) => item['name']?.toString() ?? '')
+            .where((String name) => name.trim().isNotEmpty)
+            .toList();
+        setState(() {
+          _backendCategories = names;
+          _syncAvailableTopics();
+        });
+      }
+    } catch (_) {
+      // Si la carga remota falla se mantienen los temas por defecto
+    }
   }
 
   /// Carga los datos reales del asistente desde [AuthService.fetchProfile].
@@ -114,6 +166,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _emailController.text = user.email;
     _bioController.text = user.bio;
     _selectedInterests = List<String>.from(user.interests);
+    _syncAvailableTopics();
   }
 
   /// Elimina o alterna un interés [interest] de la lista del asistente.
@@ -124,6 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       } else {
         _selectedInterests.add(interest);
       }
+      _syncAvailableTopics();
     });
   }
 
@@ -134,6 +188,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!_selectedInterests.contains(value)) {
       setState(() {
         _selectedInterests.add(value);
+        _syncAvailableTopics();
       });
     }
     _customInterestController.clear();
@@ -359,13 +414,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Divider(height: 1),
               ),
 
-              // Sección Intereses y preferencias dinámicos
-              Text(
-                i18n.tr('interests_title'),
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                ),
+              // Sección Intereses y preferencias estandarizados para matching
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Text(
+                    i18n.tr('interests_title'),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (_selectedInterests.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryViolet.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${_selectedInterests.length} activos',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryViolet,
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(
@@ -377,69 +456,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       : AppColors.lightTextSecondary,
                 ),
               ),
-              const SizedBox(height: 12),
-
-              if (_selectedInterests.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    i18n.tr('interests_empty'),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
-                    ),
-                  ),
-                )
-              else
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _selectedInterests.map((String item) {
-                    return GestureDetector(
-                      onTap: () => _toggleInterest(item),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 13,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryViolet.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppColors.primaryVioletLight,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            Text(
-                              item,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? Colors.white
-                                    : AppColors.primaryViolet,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            const Icon(
-                              Icons.close_rounded,
-                              size: 14,
-                              color: AppColors.primaryVioletLight,
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-
               const SizedBox(height: 14),
 
-              // Campo para agregar nuevo interés
+              // Chips de temas disponibles (por defecto + categorías backend + intereses activos)
+              // Al tocarlos se agregan o quitan al instante sin necesidad de escribir texto directamente.
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _availableTopics.map((String topic) {
+                  final bool isSelected = _selectedInterests.contains(topic);
+                  return FilterChip(
+                    label: Text(topic),
+                    selected: isSelected,
+                    onSelected: (_) => _toggleInterest(topic),
+                    selectedColor: AppColors.primaryViolet,
+                    checkmarkColor: Colors.white,
+                    backgroundColor: isDark
+                        ? AppColors.darkSurfaceElevated
+                        : Colors.grey.shade100,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: isSelected
+                            ? AppColors.primaryViolet
+                            : (isDark
+                                ? AppColors.darkBorder
+                                : AppColors.lightBorder),
+                      ),
+                    ),
+                    labelStyle: TextStyle(
+                      fontSize: 12,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected
+                          ? Colors.white
+                          : (isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.lightTextPrimary),
+                    ),
+                    showCheckmark: true,
+                    avatar: isSelected
+                        ? null
+                        : const Icon(
+                            Icons.add_rounded,
+                            size: 15,
+                            color: AppColors.primaryViolet,
+                          ),
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 18),
+
+              // Campo secundario opcional para agregar un interés personalizado
+              Text(
+                i18n.tr('interests_custom_title'),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
               Row(
                 children: <Widget>[
                   Expanded(
@@ -447,13 +527,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       controller: _customInterestController,
                       onSubmitted: (_) => _addCustomInterest(),
                       decoration: InputDecoration(
-                        hintText: i18n.tr('hint_add_interest'),
+                        hintText: i18n.tr('hint_add_custom_interest'),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   IconButton.filled(
                     onPressed: _addCustomInterest,
+                    tooltip: i18n.tr('hint_add_interest'),
                     style: IconButton.styleFrom(
                       backgroundColor: AppColors.primaryViolet,
                       foregroundColor: Colors.white,

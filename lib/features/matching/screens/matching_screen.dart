@@ -19,6 +19,16 @@ class MatchingScreen extends StatefulWidget {
 }
 
 class _MatchingScreenState extends State<MatchingScreen> {
+  static const List<String> _suggestedZones = <String>[
+    'Equipetrol',
+    'Centro',
+    'Urbarí',
+    'Las Palmas',
+    'Manzana 40',
+    'Urubó',
+    'Zona Norte',
+  ];
+
   final _service = MatchingService();
   final _from = TextEditingController();
   final _to = TextEditingController();
@@ -563,11 +573,64 @@ class _MatchingScreenState extends State<MatchingScreen> {
 
                         TextField(
                           controller: _zone,
-                          decoration: const InputDecoration(
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
                             labelText: 'Zona preferida (opcional)',
                             hintText: 'Ej. Equipetrol, Centro, Urbarí...',
-                            prefixIcon: Icon(Icons.location_on_outlined, size: 20),
+                            prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
+                            suffixIcon: _zone.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear_rounded, size: 18),
+                                    onPressed: () => setState(() => _zone.clear()),
+                                  )
+                                : null,
                           ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // Selección rápida de zonas sugeridas con un toque sin escribir
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: _suggestedZones.map((String z) {
+                            final bool isSelected =
+                                _zone.text.trim().toLowerCase() == z.toLowerCase();
+                            return ChoiceChip(
+                              label: Text(z),
+                              selected: isSelected,
+                              onSelected: (bool selected) {
+                                setState(() {
+                                  _zone.text = selected ? z : '';
+                                });
+                              },
+                              selectedColor: AppColors.primaryViolet,
+                              backgroundColor: isDark
+                                  ? AppColors.darkSurfaceElevated
+                                  : Colors.grey.shade100,
+                              labelStyle: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                color: isSelected
+                                    ? Colors.white
+                                    : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                side: BorderSide(
+                                  color: isSelected
+                                      ? AppColors.primaryViolet
+                                      : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                                ),
+                              ),
+                              showCheckmark: false,
+                              avatar: Icon(
+                                isSelected ? Icons.check_circle_rounded : Icons.place_outlined,
+                                size: 14,
+                                color: isSelected ? Colors.white : AppColors.primaryViolet,
+                              ),
+                            );
+                          }).toList(),
                         ),
 
                         const SizedBox(height: 18),

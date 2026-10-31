@@ -118,10 +118,14 @@ class AppLocalizations {
       'hint_bio': 'Cuéntale a la comunidad un poco sobre ti...',
       'interests_title': 'Intereses y preferencias',
       'interests_subtitle':
-          'Selecciona o agrega los temas que afinan tu catálogo.',
+          'Toca los temas predeterminados para agregarlos o quitarlos al instante y optimizar tus afinidades en el matching.',
       'interests_empty':
-          'Aún no has agregado intereses. Escribe uno abajo para comenzar.',
+          'Aún no has seleccionado intereses. Toca los temas de abajo para comenzar.',
+      'interests_popular': 'Temas recomendados para matching:',
+      'interests_custom_title': '¿Otro tema específico? (Opcional)',
       'hint_add_interest': 'Escribe un interés y presiona el botón agregar',
+      'hint_add_custom_interest': 'Ej. Cocina fusión, Fotografía nocturna...',
+      'matching_suggested_zones': 'Zonas sugeridas:',
       'btn_save_changes': 'Guardar cambios',
       'profile_saved_toast': 'Perfil actualizado en el servidor correctamente.',
       'theme_dark': 'Modo Oscuro',
@@ -234,10 +238,14 @@ class AppLocalizations {
       'hint_bio': 'Tell the community a little about yourself...',
       'interests_title': 'Interests & Preferences',
       'interests_subtitle':
-          'Select or add topics that tailor your experience catalog.',
+          'Tap default topics to instantly add or remove them and optimize your affinity matching.',
       'interests_empty':
-          'No interests added yet. Type one below to get started.',
+          'No interests selected yet. Tap the topics below to get started.',
+      'interests_popular': 'Recommended topics for matching:',
+      'interests_custom_title': 'Other specific topic? (Optional)',
       'hint_add_interest': 'Type an interest and press the add button',
+      'hint_add_custom_interest': 'E.g. Fusion cuisine, Night photography...',
+      'matching_suggested_zones': 'Suggested zones:',
       'btn_save_changes': 'Save Changes',
       'profile_saved_toast': 'Profile updated on the server successfully.',
       'theme_dark': 'Dark Mode',
