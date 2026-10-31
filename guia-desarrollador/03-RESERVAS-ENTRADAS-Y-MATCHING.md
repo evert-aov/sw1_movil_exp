@@ -1,29 +1,41 @@
 # Reservas, entradas, matching y avisos — sprint 2
 
-[Índice](README.md) · [Reservas](../lib/features/booking/services/booking_service.dart) · [Matching](../lib/features/matching/services/matching_service.dart)
+[Índice](README.md) · [Reservas](../lib/features/booking/services/booking_service.dart) · [Checkout](../lib/features/booking/screens/checkout_screen.dart) · [Mis Entradas](../lib/features/booking/screens/my_tickets_screen.dart) · [Matching](../lib/features/matching/screens/matching_screen.dart) · [Avisos](../lib/features/notifications/notifications_screen.dart)
 
-## CU-05: compra y entradas
+## CU-05 / HU-06, HU-07: Compra, retención y entradas digitales
 
-Detalle abre CheckoutScreen. El asistente elige 1–20 entradas; la pantalla conserva una clave de operación durante reintentos. BookingRequestModel envía solo experience_id/quantity: el servidor calcula dinero y capacidad.
+* **Diseño moderno de Checkout (`CheckoutScreen`):**
+  - Selector de cantidad de 1 a 20 entradas con control incremental (stepper) estilizado y previsualización de importe total en Bs.
+  - Visualización del temporizador regresivo de retención de cupos (15 minutos) con advertencia visual antes de expirar.
+  - Clave de idempotencia única reutilizable por operación para evitar cobros dobles en reintentos de conexión.
+  - Apertura segura de Stripe Checkout con `url_launcher` restringida exclusivamente al host oficial `https://checkout.stripe.com`.
+  - Reconciliación automática de estado financiero al regresar la aplicación al primer plano, más botón manual de comprobación.
 
-Stripe Checkout se abre con url_launcher en navegador externo, únicamente para https://checkout.stripe.com. Al regresar al primer plano se consulta el backend; también hay botón Actualizar estado. El retorno web usa FRONTEND_URL del backend y no crea una sesión web para el usuario móvil. La confirmación se demuestra en la app consultando la reserva.
+* **Historial y pases digitales (`MyTicketsScreen`):**
+  - Tarjetas agrupadas con distintivos semánticos de estado (`PAGADO`, `CONFIRMADO`, `PENDIENTE`, `CANCELADO`).
+  - Diálogo de pase de acceso con código QR generado localmente mediante el paquete `qr` (sin servicios externos ni envío de datos personales) con margen de 4 módulos.
+  - Muestra del código de validación alfanumérico monoespaciado para escaneo o comprobación manual en puerta por parte del anfitrión.
+  - Flujo de solicitud de reembolso completo antes del inicio del evento para reservas con entradas no utilizadas.
 
-La pestaña Entradas lista BookingModel con tickets anidados, estados económico/evento, moneda, fecha y devolución. Los fallos HTTP se muestran como errores. Cada QR se genera localmente con qr desde el payload firmado y margen de cuatro módulos; no contiene datos personales añadidos por el cliente.
+## CU-06 / HU-08, HU-09: Grupos por afinidad y quórum
 
-Se permite solicitar devolución completa antes del evento y sin entradas utilizadas, según validación del servidor. pending no se muestra como dinero devuelto. El ingreso necesita autorización y conectividad del anfitrión; no se promete validación offline ni almacenamiento persistente offline de pases.
+* **Pantalla de Matching grupal (`MatchingScreen`):**
+  - Tarjeta de estado de grupo con indicador visual de quórum (`currentMembers / targetQuorum`) y barra de progreso animada.
+  - Selector rápido de zonas sugeridas mediante chips táctiles (`Equipetrol`, `Centro`, `Urbarí`, `Las Palmas`, `Manzana 40`, `Urubó`, `Zona Norte`) que agilizan la postulación sin necesidad de escribir texto.
+  - Selectores interactivos de fecha y hora (`DatePicker` + `TimePicker`) que convierten la hora local del dispositivo a formato ISO-8601 UTC para el servidor.
+  - Espaciado ergonómico de 14px a 18px entre campos de formulario y botones de acción principal.
+  - Actualización periódica cada 15 segundos mediante sondeo controlado (`Timer.periodic`) mientras la pantalla permanece abierta.
+  - Acción de retiro voluntario de postulación con diálogo de confirmación que no afecta compras previas de entradas.
 
-Después de cambiar pubspec.yaml ejecutar flutter pub get para preparar también los plugins nativos de url_launcher; el análisis estático no demuestra apertura de navegador en dispositivo.
+## Notificaciones y avisos de quórum
 
-## CU-06: matching y avisos
+* **Bandeja persistente (`NotificationsScreen`):**
+  - Consume el endpoint `GET /notifications` con soporte de paginación (`limit=50`).
+  - Sondeo en segundo plano cada 30 segundos mientras la bandeja está abierta.
+  - Marcado de lectura idempotente mediante `PATCH /notifications/{id}/read`.
+  - Navegación directa al modal de la experiencia asociada desde el aviso recibido.
 
-Detalle abre MatchingScreen para consultar grupo sin postular. POST /matching/apply envía disponibilidad/zona opcionales; intereses provienen del perfil. Los campos de disponibilidad usan hora local del dispositivo y se convierten a UTC.
+## Internacionalización completa (ES / EN)
 
-GET /matching/group/{id} actualiza estado cada 15 segundos mientras la pantalla está abierta. Se diferencian interés, afinidad, cupos pagados y confirmación económica. Retirar postulación no cancela una compra. Las respuestas antiguas no sobrescriben una postulación nueva.
+Todas las pantallas de reservas, entradas, matching y notificaciones implementan el contrato `i18n`, traduciendo títulos, estados, botones de acción, etiquetas de formularios y mensajes de error de forma consistente entre Español e Inglés.
 
-La pestaña Avisos consume GET /notifications, permite leer páginas anteriores, marcar mensajes mediante PATCH y abrir la experiencia. Recupera mensajes al entrar y consulta cada 30 segundos. No hay push con app cerrada.
-
-## CU-07 y límites
-
-La demanda de establecimientos solo se expone en web. El catálogo móvil envía X-Search-Session efímero para deduplicar búsquedas; el resultado se registra en el backend.
-
-Las pruebas de contratos están en test/booking_contract_test.dart y test/auth_contract_test.dart. El análisis Dart se comprobó; el runner Flutter y la demostración en dispositivo siguen pendientes por las restricciones del entorno. Ver [operación](04-PRUEBAS-Y-OPERACION.md) y [avance](../../docs/AVANCE_SPRINT_2.md).

@@ -6,9 +6,9 @@ La aplicación móvil de EXPERIENCIA organiza código por funcionalidades. Regis
 | --- | --- |
 | [00 — Arquitectura y configuración](00-ARQUITECTURA-Y-CONFIGURACION.md) | SDK, arranque, URLs por plataforma |
 | [01 — Sesión y cliente HTTP](01-SESION-Y-CLIENTE-HTTP.md) | Token, modelos y errores |
-| [02 — Catálogo y perfil](02-CATALOGO-Y-PERFIL.md) | API actual, navegación y límites |
-| [03 — Reservas, entradas y matching](03-RESERVAS-ENTRADAS-Y-MATCHING.md) | Extensión de sprint 2 |
-| [04 — Pruebas y operación](04-PRUEBAS-Y-OPERACION.md) | Verificación y dispositivo |
+| [02 — Catálogo y perfil](02-CATALOGO-Y-PERFIL.md) | Vista 'Para ti', nube de temas estándar, filtros y conteo exacto |
+| [03 — Reservas, entradas y matching](03-RESERVAS-ENTRADAS-Y-MATCHING.md) | Checkout moderno, pases QR, matching con chips de zona y avisos |
+| [04 — Pruebas y operación](04-PRUEBAS-Y-OPERACION.md) | Suite automatizada de 17 pruebas aprobadas y diagnóstico |
 | [05 — Directorios y flujos](05-MAPA-DE-DIRECTORIOS-Y-FLUJOS.md) | Mapa de responsabilidades |
 
 Desde `experiencia_movil/`:
