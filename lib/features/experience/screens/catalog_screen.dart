@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/network/http_client.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/services/auth_service.dart';
 import '../models/experience_filter_model.dart';
 import '../models/experience_model.dart';
 import '../services/experience_service.dart';
@@ -26,6 +27,7 @@ class CatalogScreen extends StatefulWidget {
 
 class _CatalogScreenState extends State<CatalogScreen> {
   final ExperienceService _service = ExperienceService();
+  final AuthService _authService = AuthService();
 
   List<ExperienceModel> _experiences = <ExperienceModel>[];
   List<String> _dynamicCategories = <String>['Todos'];
@@ -39,13 +41,48 @@ class _CatalogScreenState extends State<CatalogScreen> {
   @override
   void initState() {
     super.initState();
+    final user = _authService.currentUser;
+    if (user != null && user.interests.isNotEmpty) {
+      _filter = _filter.copyWith(category: 'Para ti');
+    }
+    _checkInitialUserInterests();
     _loadCatalog();
+  }
+
+  void _checkInitialUserInterests() {
+    if (_authService.currentUser == null && HttpClient.authToken != null) {
+      _authService.fetchProfile().then((user) {
+        if (mounted && user.interests.isNotEmpty && _filter.category == 'Todos') {
+          setState(() {
+            _filter = _filter.copyWith(category: 'Para ti');
+          });
+          _loadCatalog();
+        }
+      }).catchError((_) {});
+    }
+  }
+
+  bool _matchesInterests(ExperienceModel exp, List<String> interests) {
+    if (interests.isEmpty) return true;
+    final categoryNorm = exp.categoryName.toLowerCase().trim();
+    final titleNorm = exp.title.toLowerCase();
+    final descNorm = exp.description.toLowerCase();
+
+    return interests.any((interest) {
+      final tag = interest.toLowerCase().trim();
+      if (tag.isEmpty) return false;
+      if (categoryNorm.contains(tag) || tag.contains(categoryNorm)) return true;
+      if (titleNorm.contains(tag) || descNorm.contains(tag)) return true;
+      final words = tag.split(RegExp(r'\s+')).where((w) => w.length > 3);
+      return words.any((w) => titleNorm.contains(w) || descNorm.contains(w));
+    });
   }
 
   /// Consulta el catálogo en [ExperienceService.getCatalog] y extrae las categorías disponibles de los datos recibidos.
   Future<void> _loadCatalog() async {
     final request = ++_requestSequence;
     final filter = _filter;
+    final bool isForYou = filter.category == 'Para ti';
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -66,7 +103,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
         }
       }
 
-      final List<ExperienceModel> data = await _service.getCatalog(filter);
+      final serverFilter = isForYou ? filter.copyWith(category: 'Todos') : filter;
+      final List<ExperienceModel> data = await _service.getCatalog(serverFilter);
       if (mounted && request == _requestSequence) {
         final Set<String> categorySet = <String>{
           'Todos',
@@ -77,8 +115,20 @@ class _CatalogScreenState extends State<CatalogScreen> {
             categorySet.add(exp.categoryName.trim());
           }
         }
+
+        List<ExperienceModel> displayedData = data;
+        if (isForYou) {
+          final userInterests = _authService.currentUser?.interests ?? <String>[];
+          if (userInterests.isNotEmpty) {
+            final matched = data.where((exp) => _matchesInterests(exp, userInterests)).toList();
+            if (matched.isNotEmpty) {
+              displayedData = matched;
+            }
+          }
+        }
+
         setState(() {
-          _experiences = data;
+          _experiences = displayedData;
           _dynamicCategories = categorySet.toList();
           _isLoading = false;
         });
@@ -116,66 +166,112 @@ class _CatalogScreenState extends State<CatalogScreen> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (ctx, update) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(i18n.tr('advanced_filters')),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                TextButton(
-                  onPressed: () async {
-                    final value = await showDatePicker(
-                      context: ctx,
-                      initialDate: from ?? DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
-                    );
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () async {
+                          final value = await showDatePicker(
+                            context: ctx,
+                            initialDate: from ?? DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2100),
+                          );
                           if (value != null && ctx.mounted) {
                             update(() => from = value);
                           }
-                  },
-                  child: Text(
-                    '${i18n.tr('date_from')}: ${from?.toIso8601String().substring(0, 10) ?? '—'}',
-                  ),
+                        },
+                        icon: const Icon(Icons.calendar_today_rounded, size: 15),
+                        label: Text(
+                          from != null
+                              ? '${i18n.tr('date_from')}\n${from!.toIso8601String().substring(0, 10)}'
+                              : '${i18n.tr('date_from')}: —',
+                          style: const TextStyle(fontSize: 11),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () async {
+                          final value = await showDatePicker(
+                            context: ctx,
+                            initialDate: to ?? DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2100),
+                          );
+                          if (value != null && ctx.mounted) {
+                            update(() => to = value);
+                          }
+                        },
+                        icon: const Icon(Icons.event_available_rounded, size: 15),
+                        label: Text(
+                          to != null
+                              ? '${i18n.tr('date_to')}\n${to!.toIso8601String().substring(0, 10)}'
+                              : '${i18n.tr('date_to')}: —',
+                          style: const TextStyle(fontSize: 11),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: () async {
-                    final value = await showDatePicker(
-                      context: ctx,
-                      initialDate: to ?? DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
-                    );
-                    if (value != null && ctx.mounted) {
-                      update(() => to = value);
-                    }
-                  },
-                  child: Text(
-                    '${i18n.tr('date_to')}: ${to?.toIso8601String().substring(0, 10) ?? '—'}',
-                  ),
-                ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: latitude,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                     signed: true,
                   ),
-                  decoration: InputDecoration(labelText: i18n.tr('latitude')),
+                  decoration: InputDecoration(
+                    labelText: i18n.tr('latitude'),
+                    prefixIcon: const Icon(Icons.place_outlined, size: 20),
+                  ),
                 ),
+                const SizedBox(height: 14),
                 TextField(
                   controller: longitude,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                     signed: true,
                   ),
-                  decoration: InputDecoration(labelText: i18n.tr('longitude')),
+                  decoration: InputDecoration(
+                    labelText: i18n.tr('longitude'),
+                    prefixIcon: const Icon(Icons.explore_outlined, size: 20),
+                  ),
                 ),
+                const SizedBox(height: 14),
                 TextField(
                   controller: radius,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: i18n.tr('radius_km')),
+                  decoration: InputDecoration(
+                    labelText: i18n.tr('radius_km'),
+                    prefixIcon: const Icon(Icons.radar_rounded, size: 20),
+                  ),
                 ),
+                const SizedBox(height: 10),
                 SwitchListTile(
-                  title: Text(i18n.tr('only_available')),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    i18n.tr('only_available'),
+                    style: const TextStyle(fontSize: 13),
+                  ),
                   value: available,
                   onChanged: (value) => update(() => available = value),
                 ),
@@ -197,6 +293,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primaryViolet,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               child: Text(i18n.tr('apply_filters')),
             ),
           ],
@@ -333,6 +433,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
   Widget build(BuildContext context) {
     final AppLocalizations i18n = widget.i18n;
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final userInterests = _authService.currentUser?.interests ?? <String>[];
+    final List<String> displayCategories = <String>[
+      if (userInterests.isNotEmpty) 'Para ti',
+      'Todos',
+      ..._dynamicCategories.where((c) => c != 'Todos' && c != 'Para ti'),
+    ];
 
     return RefreshIndicator(
       onRefresh: _loadCatalog,
@@ -438,13 +544,21 @@ class _CatalogScreenState extends State<CatalogScreen> {
             height: 38,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: _dynamicCategories.length,
+              itemCount: displayCategories.length,
               separatorBuilder: (BuildContext context, int index) =>
                   const SizedBox(width: 8),
               itemBuilder: (BuildContext ctx, int index) {
-                final String cat = _dynamicCategories[index];
+                final String cat = displayCategories[index];
                 final bool isSelected = cat == _filter.category;
+                final bool isForYou = cat == 'Para ti';
                 return ChoiceChip(
+                  avatar: isForYou
+                      ? Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 14,
+                          color: isSelected ? Colors.amberAccent : AppColors.primaryVioletLight,
+                        )
+                      : null,
                   label: Text(i18n.translateCategory(cat)),
                   selected: isSelected,
                   onSelected: (bool selected) {
@@ -481,6 +595,40 @@ class _CatalogScreenState extends State<CatalogScreen> {
               },
             ),
           ),
+
+          if (_filter.category == 'Para ti' && userInterests.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.primaryViolet.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primaryViolet.withValues(alpha: 0.22),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome_rounded,
+                    size: 16,
+                    color: AppColors.primaryVioletLight,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Mostrando experiencias según tus preferencias (${userInterests.join(', ')})',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.primaryViolet,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           const SizedBox(height: 16),
 

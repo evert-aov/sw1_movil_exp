@@ -86,6 +86,8 @@ class AppLocalizations {
       'mod_virtual': 'Virtual',
       'mod_hybrid': 'Híbrido',
       'cat_all': 'Todos',
+      'for_you': 'Para ti',
+      'for_you_subtitle': 'Experiencias seleccionadas según tus intereses',
       'available_events': 'Experiencias Disponibles',
       'no_events_title': 'No hay experiencias disponibles',
       'no_events_subtitle':
@@ -200,6 +202,8 @@ class AppLocalizations {
       'mod_virtual': 'Virtual',
       'mod_hybrid': 'Hybrid',
       'cat_all': 'All',
+      'for_you': 'For You',
+      'for_you_subtitle': 'Experiences tailored to your preferences',
       'available_events': 'Available Experiences',
       'no_events_title': 'No experiences available',
       'no_events_subtitle':
@@ -249,10 +253,13 @@ class AppLocalizations {
         key;
   }
 
-  /// Traduce la etiqueta de categoría general ('Todos' / 'All') manteniendo intactas las categorías dinámicas de la API.
+  /// Traduce la etiqueta de categoría general ('Todos' / 'All' o 'Para ti' / 'For You') manteniendo intactas las categorías dinámicas de la API.
   String translateCategory(String rawCategory) {
     if (rawCategory == 'Todos') {
       return tr('cat_all');
+    }
+    if (rawCategory == 'Para ti') {
+      return tr('for_you');
     }
     return rawCategory;
   }
