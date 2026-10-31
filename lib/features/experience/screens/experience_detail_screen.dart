@@ -353,8 +353,9 @@ class ExperienceDetailScreen extends StatelessWidget {
 
                 OutlinedButton.icon(
                   onPressed: () => Navigator.push(context, MaterialPageRoute<void>(
-                    builder: (_) => MatchingScreen(experienceId: experience.id))),
-                  icon: const Icon(Icons.groups_outlined), label: const Text('Buscar grupo por afinidad'),
+                    builder: (_) => MatchingScreen(experienceId: experience.id, i18n: i18n))),
+                  icon: const Icon(Icons.groups_outlined),
+                  label: Text(i18n.tr('btn_matching_search')),
                 ),
                 Text(
                   i18n.tr('about_event'),
@@ -465,6 +466,7 @@ class ExperienceDetailScreen extends StatelessWidget {
                         experienceId: experience.id,
                         initialTitle: experience.title,
                         initialPrice: experience.price,
+                        i18n: i18n,
                       ),
                     ),
                   ),
@@ -481,7 +483,7 @@ class ExperienceDetailScreen extends StatelessWidget {
                   ),
                   icon: const Icon(Icons.check_circle_outline, size: 18),
                   label: Text(
-                    'Reservar entradas',
+                    i18n.tr('btn_book_tickets'),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,

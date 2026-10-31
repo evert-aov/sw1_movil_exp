@@ -436,7 +436,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${_selectedInterests.length} activos',
+                        '${_selectedInterests.length} ${i18n.tr('active')}',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -466,7 +466,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: _availableTopics.map((String topic) {
                   final bool isSelected = _selectedInterests.contains(topic);
                   return FilterChip(
-                    label: Text(topic),
+                    label: Text(i18n.translateCategory(topic)),
                     selected: isSelected,
                     onSelected: (_) => _toggleInterest(topic),
                     selectedColor: AppColors.primaryViolet,

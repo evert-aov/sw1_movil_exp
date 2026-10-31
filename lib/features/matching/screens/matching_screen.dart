@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/network/http_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../booking/screens/checkout_screen.dart';
@@ -12,13 +13,16 @@ import '../services/matching_service.dart';
 /// monitorear el progreso hacia el quórum y pasar directamente a la reserva formal.
 class MatchingScreen extends StatefulWidget {
   final String experienceId;
-  const MatchingScreen({super.key, required this.experienceId});
+  final AppLocalizations? i18n;
+  const MatchingScreen({super.key, required this.experienceId, this.i18n});
 
   @override
   State<MatchingScreen> createState() => _MatchingScreenState();
 }
 
 class _MatchingScreenState extends State<MatchingScreen> {
+  AppLocalizations get i18n => widget.i18n ?? const AppLocalizations('es');
+
   static const List<String> _suggestedZones = <String>[
     'Equipetrol',
     'Centro',
@@ -110,19 +114,17 @@ class _MatchingScreenState extends State<MatchingScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('¿Retirar postulación?'),
-        content: const Text(
-          'Dejarás de formar parte del grupo de afinidad para esta experiencia.',
-        ),
+        title: Text(i18n.tr('matching_leave_confirm_title')),
+        content: Text(i18n.tr('matching_leave_confirm_desc')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(i18n.tr('btn_cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.roseDanger),
-            child: const Text('Retirar'),
+            child: Text(i18n.tr('btn_withdraw')),
           ),
         ],
       ),
@@ -233,9 +235,9 @@ class _MatchingScreenState extends State<MatchingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Grupo por afinidad',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          i18n.tr('matching_title'),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         elevation: 0,
       ),
@@ -272,8 +274,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'La postulación reúne asistentes afines para alcanzar el quórum. '
-                          'Cuando el grupo se complete, cada miembro reserva y paga sus entradas.',
+                          i18n.tr('matching_banner_desc'),
                           style: TextStyle(
                             fontSize: 12.5,
                             color: isDark ? AppColors.darkTextSecondary : AppColors.primaryViolet,
@@ -350,7 +351,9 @@ class _MatchingScreenState extends State<MatchingScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  group.hasJoined ? 'Tu grupo asignado' : 'Grupo en formación',
+                                  group.hasJoined
+                                      ? i18n.tr('matching_your_group')
+                                      : i18n.tr('matching_forming_group'),
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -370,7 +373,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Interesados en el grupo',
+                              i18n.tr('matching_members_label'),
                               style: TextStyle(fontSize: 13, color: secondaryText),
                             ),
                             Text(
@@ -464,9 +467,9 @@ class _MatchingScreenState extends State<MatchingScreen> {
                             child: OutlinedButton.icon(
                               onPressed: _busy ? null : _leave,
                               icon: const Icon(Icons.exit_to_app_rounded, size: 16, color: AppColors.roseDanger),
-                              label: const Text(
-                                'Retirar postulación',
-                                style: TextStyle(color: AppColors.roseDanger),
+                              label: Text(
+                                i18n.tr('matching_leave_btn'),
+                                style: const TextStyle(color: AppColors.roseDanger),
                               ),
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(color: AppColors.roseDanger.withValues(alpha: 0.4)),
@@ -495,7 +498,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Todavía no participas de un grupo. Postúlate indicando tu disponibilidad horaria.',
+                            i18n.tr('matching_no_group_yet'),
                             style: TextStyle(fontSize: 12.5, color: secondaryText),
                           ),
                         ),
@@ -527,7 +530,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'POSTULARME AL GRUPO',
+                          i18n.tr('matching_form_kicker'),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -541,7 +544,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
                           controller: _from,
                           readOnly: false,
                           decoration: InputDecoration(
-                            labelText: 'Disponible desde (hora local)',
+                            labelText: i18n.tr('matching_from_label'),
                             hintText: 'AAAA-MM-DDTHH:mm',
                             prefixIcon: const Icon(Icons.schedule_rounded, size: 20),
                             suffixIcon: IconButton(
@@ -558,7 +561,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
                           controller: _to,
                           readOnly: false,
                           decoration: InputDecoration(
-                            labelText: 'Disponible hasta (hora local)',
+                            labelText: i18n.tr('matching_to_label'),
                             hintText: 'AAAA-MM-DDTHH:mm',
                             prefixIcon: const Icon(Icons.schedule_send_rounded, size: 20),
                             suffixIcon: IconButton(
@@ -575,7 +578,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
                           controller: _zone,
                           onChanged: (_) => setState(() {}),
                           decoration: InputDecoration(
-                            labelText: 'Zona preferida (opcional)',
+                            labelText: i18n.tr('matching_zone_label'),
                             hintText: 'Ej. Equipetrol, Centro, Urbarí...',
                             prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
                             suffixIcon: _zone.text.isNotEmpty
@@ -640,9 +643,9 @@ class _MatchingScreenState extends State<MatchingScreen> {
                           child: FilledButton.icon(
                             onPressed: _busy || _group?.status == 'EXPIRED' ? null : _apply,
                             icon: const Icon(Icons.group_add_rounded, size: 20),
-                            label: const Text(
-                              'Postularme al grupo',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
+                            label: Text(
+                              i18n.tr('matching_apply_btn'),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
                             ),
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.primaryViolet,
@@ -664,7 +667,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _busy ? null : _load,
                     icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: const Text('Actualizar estado del grupo'),
+                    label: Text(i18n.tr('matching_refresh_btn')),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       side: BorderSide(color: borderColor),
@@ -681,13 +684,13 @@ class _MatchingScreenState extends State<MatchingScreen> {
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute<void>(
-                        builder: (_) => CheckoutScreen(experienceId: widget.experienceId),
+                        builder: (_) => CheckoutScreen(experienceId: widget.experienceId, i18n: i18n),
                       ),
                     ),
                     icon: const Icon(Icons.confirmation_number_outlined, size: 18),
-                    label: const Text(
-                      'Reservar entradas directamente',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    label: Text(
+                      i18n.tr('matching_direct_checkout_btn'),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),

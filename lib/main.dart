@@ -173,7 +173,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ),
         ),
       ),
-      const MyTicketsScreen(),
+      MyTicketsScreen(i18n: i18n),
       NotificationsScreen(i18n: i18n),
     ];
 
@@ -276,13 +276,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ),
             label: i18n.tr('nav_profile'),
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.confirmation_number_outlined),
-            label: 'Entradas',
+          NavigationDestination(
+            icon: const Icon(Icons.confirmation_number_outlined),
+            selectedIcon: const Icon(
+              Icons.confirmation_number,
+              color: AppColors.primaryVioletLight,
+            ),
+            label: i18n.tr('nav_tickets'),
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.notifications_outlined),
-            label: 'Avisos',
+          NavigationDestination(
+            icon: const Icon(Icons.notifications_outlined),
+            selectedIcon: const Icon(
+              Icons.notifications,
+              color: AppColors.primaryVioletLight,
+            ),
+            label: i18n.tr('nav_notifications'),
           ),
         ],
       ),

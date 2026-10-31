@@ -52,22 +52,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) => RefreshIndicator(onRefresh: _load, child: ListView(
     padding: const EdgeInsets.all(20), children: [
-      Text('Avisos', style: Theme.of(context).textTheme.headlineSmall),
-      TextButton(onPressed: _busy ? null : _load, child: const Text('Actualizar')),
+      Text(widget.i18n.tr('notif_title'), style: Theme.of(context).textTheme.headlineSmall),
+      TextButton(onPressed: _busy ? null : _load, child: Text(widget.i18n.tr('btn_refresh'))),
       if (_busy) const LinearProgressIndicator(),
       if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-      if (!_busy && _error == null && _items.isEmpty) const Text('No hay avisos en esta página.'),
+      if (!_busy && _error == null && _items.isEmpty) Text(widget.i18n.tr('notif_empty')),
       for (final item in _items) Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(
         crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(item['message'] as String),
           Text('${DateTime.parse(item['created_at'] as String).toLocal()}'),
-          TextButton(onPressed: () => _open(item), child: const Text('Ver experiencia')),
-          if (item['read_at'] == null) TextButton(onPressed: () => _read(item), child: const Text('Marcar leído')),
+          TextButton(onPressed: () => _open(item), child: Text(widget.i18n.tr('notif_view_exp'))),
+          if (item['read_at'] == null) TextButton(onPressed: () => _read(item), child: Text(widget.i18n.tr('notif_mark_read'))),
         ],
       ))),
       Row(children: [
-        TextButton(onPressed: _offset == 0 || _busy ? null : () { _offset -= 50; _load(); }, child: const Text('Anteriores')),
-        TextButton(onPressed: _items.length < 50 || _busy ? null : () { _offset += 50; _load(); }, child: const Text('Más antiguos')),
+        TextButton(onPressed: _offset == 0 || _busy ? null : () { _offset -= 50; _load(); }, child: Text(widget.i18n.tr('notif_previous'))),
+        TextButton(onPressed: _items.length < 50 || _busy ? null : () { _offset += 50; _load(); }, child: Text(widget.i18n.tr('notif_older'))),
       ]),
     ],
   ));

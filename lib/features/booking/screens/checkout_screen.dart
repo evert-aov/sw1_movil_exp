@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../experience/services/experience_service.dart';
 import '../models/booking_model.dart';
@@ -16,6 +17,7 @@ class CheckoutScreen extends StatefulWidget {
   final String? bookingId;
   final String? initialTitle;
   final double? initialPrice;
+  final AppLocalizations? i18n;
 
   const CheckoutScreen({
     super.key,
@@ -23,6 +25,7 @@ class CheckoutScreen extends StatefulWidget {
     this.bookingId,
     this.initialTitle,
     this.initialPrice,
+    this.i18n,
   }) : assert(experienceId != null || bookingId != null);
 
   @override
@@ -31,6 +34,8 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen>
     with WidgetsBindingObserver {
+  AppLocalizations get i18n => widget.i18n ?? const AppLocalizations('es');
+
   final _service = BookingService();
   final _experienceService = ExperienceService();
   final _key = BookingService.newKey();
@@ -770,8 +775,8 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                             child: FilledButton.icon(
                               onPressed: () => Navigator.of(context).push(
                                 MaterialPageRoute<void>(
-                                  builder: (_) => const Scaffold(
-                                    body: SafeArea(child: MyTicketsScreen()),
+                                  builder: (_) => Scaffold(
+                                    body: SafeArea(child: MyTicketsScreen(i18n: i18n)),
                                   ),
                                 ),
                               ),

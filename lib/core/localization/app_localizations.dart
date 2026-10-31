@@ -37,6 +37,8 @@ class AppLocalizations {
       'feature_3_desc': 'Confirmación transparente al completar el cupo mínimo',
       'nav_discover': 'Descubrir',
       'nav_profile': 'Mi Perfil',
+      'nav_tickets': 'Entradas',
+      'nav_notifications': 'Avisos',
       'welcome_badge': 'BIENVENIDO A EXPERIENCIA',
       'login_header': 'Accede a tu cuenta.',
       'register_header': 'Crea tu acceso.',
@@ -88,7 +90,23 @@ class AppLocalizations {
       'cat_all': 'Todos',
       'for_you': 'Para ti',
       'for_you_subtitle': 'Experiencias seleccionadas según tus intereses',
+      'for_you_banner_prefix': 'Mostrando experiencias según tus preferencias',
+      'no_for_you_events_subtitle':
+          'No hay experiencias activas que coincidan con tus preferencias actuales. Puedes explorar todas las categorías o agregar más intereses en tu perfil.',
       'available_events': 'Experiencias Disponibles',
+      'cat_gastronomy': 'Gastronomía',
+      'cat_art': 'Arte y Pintura',
+      'cat_music': 'Música y Conciertos',
+      'cat_workshops': 'Talleres y Educación',
+      'cat_networking': 'Networking y Negocios',
+      'cat_wellness': 'Bienestar y Outdoors',
+      'topic_coffee': 'Café de especialidad',
+      'topic_tasting': 'Cata y Maridaje',
+      'topic_electronic': 'DJ y Electrónica',
+      'topic_tech': 'Tecnología y Software',
+      'topic_design': 'Diseño UI/UX',
+      'topic_photo': 'Fotografía',
+      'topic_yoga': 'Yoga y Mindfulness',
       'no_events_title': 'No hay experiencias disponibles',
       'no_events_subtitle':
           'El catálogo está vacío o no existen resultados para los filtros aplicados.',
@@ -100,6 +118,49 @@ class AppLocalizations {
       'slots': 'cupos',
       'price_per_person': 'Cupo por asistente',
       'btn_view_detail': 'Ver Detalle',
+      'btn_matching_search': 'Buscar grupo por afinidad',
+      'btn_book_tickets': 'Reservar entradas',
+      'matching_title': 'Grupo por afinidad',
+      'matching_banner_desc':
+          'La postulación reúne asistentes afines para alcanzar el quórum. Cuando el grupo se complete, cada miembro reserva y paga sus entradas.',
+      'matching_your_group': 'Tu grupo asignado',
+      'matching_forming_group': 'Grupo en formación',
+      'matching_members_label': 'Interesados en el grupo',
+      'matching_leave_btn': 'Retirar postulación',
+      'matching_no_group_yet':
+          'Todavía no participas de un grupo. Postúlate indicando tu disponibilidad horaria.',
+      'matching_form_kicker': 'POSTULARME AL GRUPO',
+      'matching_from_label': 'Disponible desde (hora local)',
+      'matching_to_label': 'Disponible hasta (hora local)',
+      'matching_zone_label': 'Zona preferida (opcional)',
+      'matching_apply_btn': 'Postularme al grupo',
+      'matching_refresh_btn': 'Actualizar estado del grupo',
+      'matching_direct_checkout_btn': 'Reservar entradas directamente',
+      'matching_leave_confirm_title': '¿Retirar postulación?',
+      'matching_leave_confirm_desc':
+          'Dejarás de formar parte del grupo de afinidad para esta experiencia.',
+      'btn_cancel': 'Cancelar',
+      'btn_withdraw': 'Retirar',
+      'notif_title': 'Avisos',
+      'btn_refresh': 'Actualizar',
+      'notif_empty': 'No hay avisos en esta página.',
+      'notif_view_exp': 'Ver experiencia',
+      'notif_mark_read': 'Marcar leído',
+      'notif_previous': 'Anteriores',
+      'notif_older': 'Más antiguos',
+      'notif_offline_error': 'Sin conexión. Reintentaremos recuperar los avisos.',
+      'tickets_title': 'Mis reservas',
+      'tickets_subtitle': 'Historial de compras y entradas digitales',
+      'tickets_empty_title': 'Todavía no tienes reservas',
+      'tickets_empty_subtitle': 'Explora el catálogo y reserva tus próximas experiencias.',
+      'refund_confirm_desc':
+          '¿Deseas solicitar el reembolso completo? Las entradas emitidas se anularán de inmediato.',
+      'ticket_used_note': 'Esta entrada ya fue registrada en puerta',
+      'ticket_code_label': 'Código de validación:',
+      'tickets_empty': 'Aún no tienes entradas reservadas.',
+      'checkout_title': 'Confirmar Reserva',
+      'btn_close': 'Cerrar',
+      'btn_refund': 'Solicitar devolución',
       'about_event': 'Sobre esta experiencia',
       'exact_address': 'Dirección del encuentro',
       'price_currency': 'Bs.',
@@ -116,6 +177,7 @@ class AppLocalizations {
       'hint_phone': 'Ingresa tu número de teléfono',
       'label_bio': 'Biografía',
       'hint_bio': 'Cuéntale a la comunidad un poco sobre ti...',
+      'active': 'activos',
       'interests_title': 'Intereses y preferencias',
       'interests_subtitle':
           'Toca los temas predeterminados para agregarlos o quitarlos al instante y optimizar tus afinidades en el matching.',
@@ -157,6 +219,8 @@ class AppLocalizations {
       'feature_3_desc': 'Transparent confirmation once minimum quorum is met',
       'nav_discover': 'Discover',
       'nav_profile': 'Profile',
+      'nav_tickets': 'Tickets',
+      'nav_notifications': 'Alerts',
       'welcome_badge': 'WELCOME TO EXPERIENCIA',
       'login_header': 'Sign in to your account.',
       'register_header': 'Create your access.',
@@ -208,7 +272,23 @@ class AppLocalizations {
       'cat_all': 'All',
       'for_you': 'For You',
       'for_you_subtitle': 'Experiences tailored to your preferences',
+      'for_you_banner_prefix': 'Showing experiences tailored to your preferences',
+      'no_for_you_events_subtitle':
+          'No active experiences match your current preferences. You can explore all categories or add more interests in your profile.',
       'available_events': 'Available Experiences',
+      'cat_gastronomy': 'Gastronomy',
+      'cat_art': 'Art & Painting',
+      'cat_music': 'Music & Concerts',
+      'cat_workshops': 'Workshops & Education',
+      'cat_networking': 'Networking & Business',
+      'cat_wellness': 'Wellness & Outdoors',
+      'topic_coffee': 'Specialty Coffee',
+      'topic_tasting': 'Tasting & Pairing',
+      'topic_electronic': 'DJ & Electronic',
+      'topic_tech': 'Technology & Software',
+      'topic_design': 'UI/UX Design',
+      'topic_photo': 'Photography',
+      'topic_yoga': 'Yoga & Mindfulness',
       'no_events_title': 'No experiences available',
       'no_events_subtitle':
           'The catalog is empty or no results match the selected filters.',
@@ -220,6 +300,49 @@ class AppLocalizations {
       'slots': 'slots',
       'price_per_person': 'Price per attendee',
       'btn_view_detail': 'View Details',
+      'btn_matching_search': 'Find affinity group',
+      'btn_book_tickets': 'Book tickets',
+      'matching_title': 'Affinity Group',
+      'matching_banner_desc':
+          'Postulation brings together kindred attendees to reach quorum. When the group completes, each member books and pays for their tickets.',
+      'matching_your_group': 'Your assigned group',
+      'matching_forming_group': 'Group forming',
+      'matching_members_label': 'Interested attendees',
+      'matching_leave_btn': 'Withdraw postulation',
+      'matching_no_group_yet':
+          'You are not in a group yet. Apply by indicating your time availability.',
+      'matching_form_kicker': 'APPLY TO GROUP',
+      'matching_from_label': 'Available from (local time)',
+      'matching_to_label': 'Available until (local time)',
+      'matching_zone_label': 'Preferred zone (optional)',
+      'matching_apply_btn': 'Apply to group',
+      'matching_refresh_btn': 'Refresh group status',
+      'matching_direct_checkout_btn': 'Book tickets directly',
+      'matching_leave_confirm_title': 'Withdraw postulation?',
+      'matching_leave_confirm_desc':
+          'You will leave the affinity group for this experience.',
+      'btn_cancel': 'Cancel',
+      'btn_withdraw': 'Withdraw',
+      'notif_title': 'Alerts',
+      'btn_refresh': 'Refresh',
+      'notif_empty': 'No alerts on this page.',
+      'notif_view_exp': 'View experience',
+      'notif_mark_read': 'Mark as read',
+      'notif_previous': 'Previous',
+      'notif_older': 'Older',
+      'notif_offline_error': 'Offline. We will retry fetching notices.',
+      'tickets_title': 'My Bookings',
+      'tickets_subtitle': 'Purchase history and digital tickets',
+      'tickets_empty_title': 'No bookings yet',
+      'tickets_empty_subtitle': 'Explore the catalog and book your next experiences.',
+      'refund_confirm_desc':
+          'Do you want to request a full refund? Issued tickets will be voided immediately.',
+      'ticket_used_note': 'This ticket was already used at entry',
+      'ticket_code_label': 'Validation code:',
+      'tickets_empty': 'No tickets booked yet.',
+      'checkout_title': 'Confirm Booking',
+      'btn_close': 'Close',
+      'btn_refund': 'Request refund',
       'about_event': 'About this experience',
       'exact_address': 'Venue Address',
       'price_currency': 'Bs.',
@@ -236,6 +359,7 @@ class AppLocalizations {
       'hint_phone': 'Enter your phone number',
       'label_bio': 'Biography',
       'hint_bio': 'Tell the community a little about yourself...',
+      'active': 'active',
       'interests_title': 'Interests & Preferences',
       'interests_subtitle':
           'Tap default topics to instantly add or remove them and optimize your affinity matching.',
@@ -261,13 +385,62 @@ class AppLocalizations {
         key;
   }
 
-  /// Traduce la etiqueta de categoría general ('Todos' / 'All' o 'Para ti' / 'For You') manteniendo intactas las categorías dinámicas de la API.
+  /// Traduce la etiqueta de categoría general o temática manteniendo compatibilidad con la API en inglés y español.
   String translateCategory(String rawCategory) {
-    if (rawCategory == 'Todos') {
+    final lower = rawCategory.trim().toLowerCase();
+    if (lower == 'todos' || lower == 'all') {
       return tr('cat_all');
     }
-    if (rawCategory == 'Para ti') {
+    if (lower == 'para ti' || lower == 'for you') {
       return tr('for_you');
+    }
+    if (lower.contains('gastronom') || lower == 'gastronomy') {
+      return tr('cat_gastronomy');
+    }
+    if (lower.contains('arte') || lower.contains('art')) {
+      return tr('cat_art');
+    }
+    if (lower.contains('música') || lower.contains('musica') || lower.contains('music')) {
+      return tr('cat_music');
+    }
+    if (lower.contains('taller') ||
+        lower.contains('workshop') ||
+        lower.contains('educaci') ||
+        lower.contains('education')) {
+      return tr('cat_workshops');
+    }
+    if (lower.contains('networking') ||
+        lower.contains('negocio') ||
+        lower.contains('business')) {
+      return tr('cat_networking');
+    }
+    if (lower.contains('bienestar') ||
+        lower.contains('wellness') ||
+        lower.contains('outdoor')) {
+      return tr('cat_wellness');
+    }
+    if (lower.contains('café') || lower.contains('cafe') || lower.contains('coffee')) {
+      return tr('topic_coffee');
+    }
+    if (lower.contains('maridaje') || lower.contains('tasting') || lower.contains('cata')) {
+      return tr('topic_tasting');
+    }
+    if (lower.contains('dj') || lower.contains('electr')) {
+      return tr('topic_electronic');
+    }
+    if (lower.contains('tecnolog') ||
+        lower.contains('software') ||
+        lower.contains('tech')) {
+      return tr('topic_tech');
+    }
+    if (lower.contains('diseño') || lower.contains('design') || lower.contains('ui/ux')) {
+      return tr('topic_design');
+    }
+    if (lower.contains('fotograf') || lower.contains('photo')) {
+      return tr('topic_photo');
+    }
+    if (lower.contains('yoga') || lower.contains('mindfulness')) {
+      return tr('topic_yoga');
     }
     return rawCategory;
   }

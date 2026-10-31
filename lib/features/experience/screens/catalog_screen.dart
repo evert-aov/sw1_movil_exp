@@ -120,10 +120,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         if (isForYou) {
           final userInterests = _authService.currentUser?.interests ?? <String>[];
           if (userInterests.isNotEmpty) {
-            final matched = data.where((exp) => _matchesInterests(exp, userInterests)).toList();
-            if (matched.isNotEmpty) {
-              displayedData = matched;
-            }
+            displayedData = data.where((exp) => _matchesInterests(exp, userInterests)).toList();
           }
         }
 
@@ -434,6 +431,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
     final AppLocalizations i18n = widget.i18n;
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final userInterests = _authService.currentUser?.interests ?? <String>[];
+    final bool isForYou = _filter.category == 'Para ti';
+    final int resultCount = isForYou ? _experiences.length : _service.totalResults;
     final List<String> displayCategories = <String>[
       if (userInterests.isNotEmpty) 'Para ti',
       'Todos',
@@ -617,7 +616,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Mostrando experiencias según tus preferencias (${userInterests.join(', ')})',
+                      '${i18n.tr('for_you_banner_prefix')} (${userInterests.map((t) => i18n.translateCategory(t)).join(', ')})',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -662,7 +661,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text(
-                '${i18n.tr('available_events')} (${_service.totalResults})',
+                '${i18n.tr('available_events')} ($resultCount)',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
@@ -762,7 +761,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    i18n.tr('no_events_subtitle'),
+                    isForYou
+                        ? i18n.tr('no_for_you_events_subtitle')
+                        : i18n.tr('no_events_subtitle'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,

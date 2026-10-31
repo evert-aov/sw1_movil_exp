@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/booking_model.dart';
 import '../models/ticket_model.dart';
@@ -11,13 +12,16 @@ import 'checkout_screen.dart';
 /// Alineado al sistema de diseño web con tarjetas estructuradas, distintivos semánticos
 /// de estado y visualización rápida de códigos QR para el acceso a eventos.
 class MyTicketsScreen extends StatefulWidget {
-  const MyTicketsScreen({super.key});
+  final AppLocalizations? i18n;
+  const MyTicketsScreen({super.key, this.i18n});
 
   @override
   State<MyTicketsScreen> createState() => _MyTicketsScreenState();
 }
 
 class _MyTicketsScreenState extends State<MyTicketsScreen> {
+  AppLocalizations get i18n => widget.i18n ?? const AppLocalizations('es');
+
   final _service = BookingService();
   List<BookingModel> _bookings = [];
   bool _busy = false;
@@ -81,7 +85,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Código de validación:',
+                  i18n.tr('ticket_code_label'),
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
@@ -112,9 +116,9 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                       color: AppColors.roseDanger.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text(
-                      'Esta entrada ya fue registrada en puerta',
-                      style: TextStyle(
+                    child: Text(
+                      i18n.tr('ticket_used_note'),
+                      style: const TextStyle(
                         color: AppColors.roseDanger,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -128,7 +132,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
           actions: [
             FilledButton.tonal(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cerrar'),
+              child: Text(i18n.tr('btn_close')),
             ),
           ],
         );
@@ -141,19 +145,17 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Solicitar devolución'),
-        content: const Text(
-          '¿Deseas solicitar el reembolso completo? Las entradas emitidas se anularán de inmediato.',
-        ),
+        title: Text(i18n.tr('btn_refund')),
+        content: Text(i18n.tr('refund_confirm_desc')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(i18n.tr('btn_cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.roseDanger),
-            child: const Text('Solicitar devolución'),
+            child: Text(i18n.tr('btn_refund')),
           ),
         ],
       ),
@@ -286,7 +288,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Mis reservas',
+                    i18n.tr('tickets_title'),
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -295,7 +297,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Historial de compras y entradas digitales',
+                    i18n.tr('tickets_subtitle'),
                     style: TextStyle(
                       fontSize: 12.5,
                       color: secondaryText,
@@ -306,7 +308,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
               IconButton.filledTonal(
                 onPressed: _busy ? null : _load,
                 icon: const Icon(Icons.refresh_rounded, size: 20),
-                tooltip: 'Actualizar',
+                tooltip: i18n.tr('btn_refresh'),
               ),
             ],
           ),
@@ -370,7 +372,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Todavía no tienes reservas',
+                    i18n.tr('tickets_empty_title'),
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -379,7 +381,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Explora el catálogo y reserva tus próximas experiencias.',
+                    i18n.tr('tickets_empty_subtitle'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
