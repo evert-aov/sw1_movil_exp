@@ -461,8 +461,11 @@ class ExperienceDetailScreen extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) =>
-                          CheckoutScreen(experienceId: experience.id),
+                      builder: (_) => CheckoutScreen(
+                        experienceId: experience.id,
+                        initialTitle: experience.title,
+                        initialPrice: experience.price,
+                      ),
                     ),
                   ),
                   style: FilledButton.styleFrom(
