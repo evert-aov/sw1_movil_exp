@@ -1,0 +1,38 @@
+name: Bug report
+description: Something does not work as expected in the Flutter mobile app.
+labels: ["type:bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Actual behavior, including crash logs or flutter errors.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1. Open app...
+        2. Navigate to...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [auth, experiences, booking, offline-sync, location, push-notifications, navigation, ui]
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Device & OS
+      placeholder: "Android 14 / iOS 17 · Physical device / Emulator"
