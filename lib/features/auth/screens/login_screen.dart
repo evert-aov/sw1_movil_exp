@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/network/http_client.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../live/live_monitor_strings.dart';
+import '../../live/screens/live_monitor_screen.dart';
 import '../models/auth_credentials_model.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -123,6 +125,17 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
         actions: <Widget>[
+          // HU-17: acceso del anfitrión al monitor en vivo sin iniciar sesión de asistente
+          IconButton(
+            key: const Key('live-monitor-entry'),
+            tooltip: LiveMonitorStrings(i18n.languageCode).tr('entry'),
+            icon: const Icon(Icons.monitor_heart_outlined, size: 20),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => LiveMonitorScreen(languageCode: i18n.languageCode),
+              ),
+            ),
+          ),
           TextButton.icon(
             onPressed: widget.onToggleLanguage,
             icon: const Icon(
