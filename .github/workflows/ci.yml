@@ -1,0 +1,259 @@
+name: CI & Mobile Build
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: 'Base API URL for the app (e.g. https://api.tu-dominio.com/api)'
+        required: false
+        default: 'https://api.tu-dominio.com/api'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security-scan:
+    name: Filesystem Vulnerability & Secret Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Test sanitized security report handling
+        run: python3 -m unittest discover -s scripts/ci -v
+
+      - name: Scan filesystem with Trivy
+        id: trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        timeout-minutes: 10
+        continue-on-error: true
+        with:
+          scan-type: fs
+          scan-ref: .
+          cache-dir: ${{ runner.temp }}/trivy-cache
+          scanners: vuln,secret
+          format: json
+          output: ${{ runner.temp }}/trivy-results.json
+          version: v0.70.0
+          exit-code: '0'
+          hide-progress: true
+          timeout: 8m0s
+
+      - name: Publish sanitized security report
+        if: always()
+        env:
+          SERVICE_VERSION: ${{ github.sha }}
+          TRIVY_JSON_PATH: ${{ runner.temp }}/trivy-results.json
+          TRIVY_OUTCOME: ${{ steps.trivy.outcome }}
+          SECURITY_REPORT_PATH: ${{ runner.temp }}/security-report.json
+        run: >-
+          python3 scripts/ci/security_report.py
+          --input "$TRIVY_JSON_PATH"
+          --report "$SECURITY_REPORT_PATH"
+          --summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload sanitized security report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: ${{ runner.temp }}/security-report.json
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Remove runner-temporary scanner output
+        if: always()
+        env:
+          TRIVY_JSON_PATH: ${{ runner.temp }}/trivy-results.json
+          SECURITY_REPORT_PATH: ${{ runner.temp }}/security-report.json
+        run: rm -f "$TRIVY_JSON_PATH" "$SECURITY_REPORT_PATH"
+
+  test-and-build:
+    name: Flutter Analyze, Test & Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Java 17
+        id: java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        id: flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version-file: .fvmrc
+          cache: true
+
+      - name: Install Flutter dependencies
+        id: dependencies
+        run: flutter pub get
+
+      - name: Verify static analysis
+        id: analyze
+        run: flutter analyze
+
+      - name: Run automated tests
+        id: tests
+        run: flutter test
+
+      - name: Test APK artifact integrity verifier
+        id: artifact_integrity_test
+        run: bash scripts/test-verify-apk-artifact.sh
+
+      - name: Build Android APK
+        id: build
+        env:
+          API_URL: ${{ inputs.api_base_url || vars.API_BASE_URL || 'https://api.tu-dominio.com/api' }}
+        run: |
+          flutter build apk --release --dart-define=API_BASE_URL="$API_URL"
+
+      - name: Verify APK artifact integrity
+        id: artifact_integrity
+        run: bash scripts/verify-apk-artifact.sh build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload APK as Workflow Artifact
+        id: publication
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/app-release.apk.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish actionable deployment phase diagnostics
+        if: always()
+        env:
+          SERVICE_VERSION: ${{ github.sha }}
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          JAVA_OUTCOME: ${{ steps.java.outcome }}
+          FLUTTER_OUTCOME: ${{ steps.flutter.outcome }}
+          DEPENDENCIES_OUTCOME: ${{ steps.dependencies.outcome }}
+          ANALYZE_OUTCOME: ${{ steps.analyze.outcome }}
+          TESTS_OUTCOME: ${{ steps.tests.outcome }}
+          ARTIFACT_INTEGRITY_TEST_OUTCOME: ${{ steps.artifact_integrity_test.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          ARTIFACT_INTEGRITY_OUTCOME: ${{ steps.artifact_integrity.outcome }}
+          PUBLICATION_OUTCOME: ${{ steps.publication.outcome }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          outcomes = {
+              name: os.environ.get(f"{name.upper()}_OUTCOME", "skipped")
+              for name in (
+                  "checkout", "java", "flutter", "dependencies", "analyze",
+                  "tests", "artifact_integrity_test", "build",
+                  "artifact_integrity", "publication",
+              )
+          }
+
+          service = "experiencia_movil"
+          version = os.environ.get("SERVICE_VERSION", "unknown") or "unknown"
+          reports = []
+
+          def add_report(phase, status, *, code=None, evidence, causes=None, actions=None):
+              reports.append({
+                  "schema": "diagnostic-report/v1",
+                  "service": service,
+                  "version": version,
+                  "phase": phase,
+                  "status": status,
+                  "code": code,
+                  "cause_status": "hypothesis" if status == "failed" else "unknown",
+                  "evidence": evidence,
+                  "possible_causes": causes or [],
+                  "recommended_actions": actions or [],
+              })
+
+          def status_for(outcome):
+              if outcome == "success":
+                  return "passed"
+              if outcome in ("failure", "cancelled"):
+                  return "failed"
+              return "not_verified"
+
+          preparation_steps = (
+              "checkout", "java", "flutter", "dependencies", "analyze", "tests",
+              "artifact_integrity_test",
+          )
+          first_issue = next((name for name in preparation_steps if outcomes[name] != "success"), None)
+          preparation = status_for(outcomes[first_issue]) if first_issue else "passed"
+          add_report(
+              "preparation", preparation,
+              code="CI.PREPARATION_FAILED" if preparation == "failed" else None,
+              evidence={"probe": "github_step_outcome", "source": "github", "step": first_issue or "tests", "outcome": outcomes[first_issue] if first_issue else "success"},
+              causes=["A preparation or quality-check step failed; the underlying cause is not confirmed."] if preparation == "failed" else [],
+              actions=["Inspect the first failed step and its sanitized CI log before retrying."] if preparation != "passed" else [],
+          )
+
+          for phase, step, code in (
+              ("build", "build", "CI.BUILD_FAILED"),
+              ("publication", "publication", "CI.PUBLICATION_FAILED"),
+          ):
+              outcome = outcomes[step]
+              report_step = "build_android_apk" if step == "build" else "upload_artifact"
+              if phase == "publication" and outcomes["artifact_integrity"] != "success":
+                  outcome = outcomes["artifact_integrity"]
+                  report_step = "verify_apk_artifact_integrity"
+              phase_status = status_for(outcome)
+              add_report(
+                  phase, phase_status,
+                  code=code if phase_status == "failed" else None,
+                  evidence={"probe": "github_step_outcome", "source": "github", "step": report_step, "outcome": outcome},
+                  causes=["The reported CI step failed; the underlying cause is not confirmed."] if phase_status == "failed" else [],
+                  actions=["Inspect the named step and validate its local command using the FVM toolchain."] if phase_status != "passed" else [],
+              )
+
+          add_report(
+              "startup", "not_verified",
+              evidence={"probe": "runtime_smoke_check", "source": "github", "step": "build_android_apk", "outcome": "skipped"},
+              actions=["After a separately authorized release, install the exact build on a supported device and record a startup smoke check."],
+          )
+          for phase in ("readiness", "postdeploy"):
+              add_report(
+                  phase, "not_applicable",
+                  evidence={"probe": "runtime_smoke_check", "source": "github", "step": "publication", "outcome": "skipped"},
+                  actions=["After a separately authorized distribution release, perform and record a device smoke check for startup, login, and API connectivity."],
+              )
+
+          rendered = json.dumps(reports, indent=2, sort_keys=True)
+          print(rendered)
+          summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary_path:
+              with open(summary_path, "a", encoding="utf-8") as summary:
+                  summary.write("## Mobile build diagnostic report\n\n")
+                  summary.write("APK artifact publication is not an application release or runtime health check.\n\n")
+                  summary.write("The workflow publishes a SHA-256 sidecar with the APK; verify a downloaded APK using `sha256sum --check app-release.apk.sha256`.\n\n")
+                  summary.write("```json\n" + rendered + "\n```\n")
+          PY

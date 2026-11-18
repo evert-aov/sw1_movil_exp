@@ -107,3 +107,17 @@ Para verificar la integridad estática y las pruebas unitarias:
 flutter analyze
 flutter test
 ```
+
+## Seguridad en CI
+
+El workflow ejecuta Trivy `v0.70.0` sobre el sistema de archivos para detectar vulnerabilidades y secretos. La acción está fijada a `aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25` (`v0.36.0`), usa permisos de solo lectura, no conserva credenciales de checkout y tiene un límite de ejecución.
+
+El escaneo bloquea el CI ante cualquier secreto o vulnerabilidad `HIGH`/`CRITICAL`. Los niveles `MEDIUM`, `LOW` y `UNKNOWN` se publican como advertencias. Si Trivy no se ejecuta, falla o produce JSON inválido, el reporte indica `not_verified` o `failed` según la evidencia disponible y el control bloquea el CI. El parser valida el sobre JSON de Trivy, acepta `ArtifactType: filesystem` y `ArtifactType: repository`, y admite `Results: null` como resultado vacío válido. Trivy puede asignar `repository` automáticamente cuando escanea un checkout con metadatos Git.
+
+El JSON original de Trivy y el reporte JSON sanitizado se escriben en el directorio temporal del runner; el original se elimina al terminar, y solo el reporte sanitizado se publica como artefacto de Actions durante 14 días. El reporte `security-report/v1` usa el contrato común (`service`, `version`, `phase`, `status`, `code`, `cause_status`, `evidence`, `possible_causes`, `recommended_actions`) e incluye `evidence.output_validation`. El resumen y el artefacto contienen estado, conteos y metadatos validados de vulnerabilidades. Para secretos incluyen identificadores de regla y rutas relativas validados, agrupados por par con su conteo y limitados a 20 entradas; las rutas inseguras se redactan y `secret_findings_truncated` indica si hubo más. Nunca incluyen valores detectados ni datos de líneas o coincidencias.
+
+Las reglas del reporte se verifican con la biblioteca estándar de Python:
+
+```bash
+python3 -m unittest discover -s scripts/ci -v
+```

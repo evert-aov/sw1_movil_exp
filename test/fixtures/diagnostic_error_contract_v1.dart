@@ -1,0 +1,5 @@
+const diagnosticErrorContractV1Fixture = <String, dynamic>{
+  'detail': {'field': 'invalid'},
+  'code': 'COMMON.VALIDATION_ERROR',
+  'request_id': '123e4567-e89b-42d3-a456-426614174000',
+};
