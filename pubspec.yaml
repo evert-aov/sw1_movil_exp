@@ -13,6 +13,7 @@ dependencies:
   http: ^1.2.2
   qr: ^3.0.2
   url_launcher: ^6.3.2
+  web_socket_channel: ^3.0.3
 
 dev_dependencies:
   flutter_test:

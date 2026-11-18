@@ -10,6 +10,7 @@ La aplicación móvil de EXPERIENCIA organiza código por funcionalidades. Regis
 | [03 — Reservas, entradas y matching](03-RESERVAS-ENTRADAS-Y-MATCHING.md) | Checkout moderno, pases QR, matching con chips de zona y avisos |
 | [04 — Pruebas y operación](04-PRUEBAS-Y-OPERACION.md) | Suite automatizada de 17 pruebas aprobadas y diagnóstico |
 | [05 — Directorios y flujos](05-MAPA-DE-DIRECTORIOS-Y-FLUJOS.md) | Mapa de responsabilidades |
+| [06 — Monitor en vivo (HU-17)](06-MONITOR-EN-VIVO-HU17.md) | Semáforo y pulso para anfitriones mediante código de vinculación |
 
 Desde `experiencia_movil/`:
 
