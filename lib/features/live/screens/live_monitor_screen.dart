@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../live_monitor_strings.dart';
 import '../models/live_telemetry_model.dart';
 import '../services/live_telemetry_service.dart';
+import '../widgets/mc_alert_card.dart';
 import '../widgets/pulse_sparkline.dart';
 import '../widgets/telemetry_traffic_light.dart';
 
@@ -16,6 +17,8 @@ import '../widgets/telemetry_traffic_light.dart';
 /// Paso 1: el anfitrión ingresa el código generado en la consola web.
 /// Paso 2: la pantalla muestra solo el semáforo, el porcentaje de energía y el pulso,
 /// actualizados cada 2.5 s, para consultarlos de un vistazo sin distraerse del evento.
+/// Si la atención cae de forma sostenida, el celular vibra y muestra la tarjeta del
+/// Asistente MC con la dinámica sugerida (CU-11 / HU-18, HU-19).
 class LiveMonitorScreen extends StatefulWidget {
   /// Código de idioma activo ('es' o 'en').
   final String languageCode;
@@ -46,10 +49,17 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
   StreamSubscription<TelemetryEvent>? _subscription;
   bool _pairing = false;
   String? _error;
+  McAlert? _mcAlert;
+  bool _mcBusy = false;
+  Timer? _mcClearTimer;
+
+  /// Tiempo que permanece visible el resultado de una alerta ya resuelta.
+  static const Duration _mcResolvedVisible = Duration(seconds: 4);
 
   @override
   void dispose() {
     _subscription?.cancel();
+    _mcClearTimer?.cancel();
     _codeController.dispose();
     super.dispose();
   }
@@ -90,6 +100,7 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
         if (event.connection != null) _connection = event.connection!;
         if (event.snapshot != null) _snapshot = event.snapshot;
       });
+      if (event.mcAlert != null) _showMcAlert(event.mcAlert!);
     }, onError: (Object _) => _unpair(error: _t.tr('denied')));
   }
 
@@ -102,9 +113,72 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
       _session = null;
       _snapshot = null;
       _connection = TelemetryConnectionState.connecting;
+      _mcAlert = null;
       _error = error;
       _codeController.clear();
     });
+  }
+
+  /// HU-18: muestra una alerta del Asistente MC y vibra si es una alerta nueva.
+  ///
+  /// Las alertas resueltas sin pausa en curso muestran su resultado unos segundos y se ocultan.
+  void _showMcAlert(McAlert alert) {
+    final McAlert? current = _mcAlert;
+    final bool isNew =
+        alert.status == McAlertStatus.active &&
+        (current == null || current.id != alert.id);
+    if (isNew) HapticFeedback.heavyImpact();
+    _mcClearTimer?.cancel();
+    setState(() => _mcAlert = alert);
+    final DateTime? breakEnds = alert.breakEndsAt;
+    final bool breakRunning =
+        breakEnds != null && breakEnds.isAfter(DateTime.now().toUtc());
+    if (alert.status != McAlertStatus.active && !breakRunning) {
+      _mcClearTimer = Timer(_mcResolvedVisible, () {
+        if (mounted && _mcAlert?.id == alert.id) {
+          setState(() => _mcAlert = null);
+        }
+      });
+    }
+  }
+
+  /// HU-19: envía la respuesta del moderador con el token del monitor vinculado.
+  Future<void> _respondMcAlert(McAlertAction action) async {
+    final MonitorSession? session = _session;
+    final McAlert? alert = _mcAlert;
+    if (session == null || alert == null) return;
+    setState(() => _mcBusy = true);
+    try {
+      final McAlert updated = await _service.respondMcAlert(
+        session,
+        alert.id,
+        action,
+      );
+      if (!mounted) return;
+      setState(() => _mcBusy = false);
+      _showMcAlert(updated);
+    } on ApiException {
+      if (!mounted) return;
+      setState(() => _mcBusy = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_t.tr('mc_error'))));
+    }
+  }
+
+  /// HU-19: pide una dinámica sin esperar la alerta automática.
+  Future<void> _requestMcDynamic() async {
+    final MonitorSession? session = _session;
+    if (session == null) return;
+    setState(() => _mcBusy = true);
+    try {
+      final McAlert alert = await _service.requestMcDynamic(session);
+      if (!mounted) return;
+      setState(() => _mcBusy = false);
+      _showMcAlert(alert);
+    } on ApiException {
+      if (mounted) setState(() => _mcBusy = false);
+    }
   }
 
   @override
@@ -210,6 +284,17 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
           alignment: Alignment.centerLeft,
           child: _StatusChip(label: _statusLabel(), tone: _statusColor()),
         ),
+        if (_mcAlert != null) ...<Widget>[
+          const SizedBox(height: 16),
+          McAlertCard(
+            alert: _mcAlert!,
+            strings: _t,
+            languageCode: widget.languageCode,
+            busy: _mcBusy,
+            onAction: _respondMcAlert,
+            onBreakFinished: () => setState(() => _mcAlert = null),
+          ),
+        ],
         const SizedBox(height: 24),
         Center(
           child: TelemetryTrafficLight(light: light, live: live),
@@ -271,6 +356,15 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
               style: theme.textTheme.bodySmall,
             ),
           ),
+        if (_mcAlert?.status != McAlertStatus.active) ...<Widget>[
+          const SizedBox(height: 20),
+          OutlinedButton.icon(
+            key: const Key('mc-request'),
+            onPressed: _mcBusy ? null : _requestMcDynamic,
+            icon: const Icon(Icons.lightbulb_outline_rounded),
+            label: Text(_t.tr('mc_request')),
+          ),
+        ],
         const SizedBox(height: 24),
         Row(
           children: <Widget>[

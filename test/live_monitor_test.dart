@@ -5,6 +5,8 @@ import 'package:experiencia_movil/core/network/http_client.dart';
 import 'package:experiencia_movil/features/live/models/live_telemetry_model.dart';
 import 'package:experiencia_movil/features/live/screens/live_monitor_screen.dart';
 import 'package:experiencia_movil/features/live/services/live_telemetry_service.dart';
+import 'package:experiencia_movil/features/live/live_monitor_strings.dart';
+import 'package:experiencia_movil/features/live/widgets/mc_alert_card.dart';
 import 'package:experiencia_movil/features/live/widgets/pulse_sparkline.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -116,6 +118,54 @@ class FakeTelemetryService extends LiveTelemetryService {
 
   @override
   Stream<TelemetryEvent> watch(MonitorSession session) => events.stream;
+
+  final List<McAlertAction> actions = <McAlertAction>[];
+
+  @override
+  Future<McAlert> respondMcAlert(
+    MonitorSession session,
+    String alertId,
+    McAlertAction action,
+  ) async {
+    actions.add(action);
+    return McAlert.fromJson(
+      alertJson(
+        status: action == McAlertAction.dismiss ? 'DISMISSED' : 'APPLIED',
+      ),
+    );
+  }
+}
+
+/// JSON de una alerta del Asistente MC como la emite el backend (HU-18).
+Map<String, dynamic> alertJson({
+  String status = 'ACTIVE',
+  String type = 'AUDIENCE_QUESTION',
+  String? breakEndsAt,
+}) {
+  return <String, dynamic>{
+    'id': 'alert-1',
+    'session_id': 'session-1',
+    'trigger': 'SUSTAINED_INATTENTION',
+    'status': status,
+    'average_attention': 0.3,
+    'low_attention_seconds': 305,
+    'created_at': '2026-11-19T20:00:00Z',
+    'resolved_at': null,
+    'break_ends_at': breakEndsAt,
+    'suggestion_id': 'suggestion-1',
+    'dynamic': <String, dynamic>{
+      'id': 'dyn-1',
+      'code': 'TEST',
+      'dynamic_type': type,
+      'modality': 'ANY',
+      'intensity': 2,
+      'duration_minutes': 5,
+      'title_es': 'Pregunta a mano alzada',
+      'title_en': 'Show-of-hands question',
+      'instructions_es': 'Pide levantar la mano',
+      'instructions_en': 'Ask people to raise their hands',
+    },
+  };
 }
 
 void main() {
@@ -302,5 +352,133 @@ void main() {
     await tester.tap(find.byKey(const Key('pair-button')));
     await tester.pumpAndSettle();
     expect(find.text('Código inválido o vencido.'), findsOneWidget);
+  });
+
+  test('interpreta la alerta del Asistente MC (HU-18)', () {
+    final McAlert alert = McAlert.fromJson(
+      alertJson(type: 'SHORT_BREAK', breakEndsAt: '2026-11-19T20:05:00Z'),
+    );
+    expect(alert.status, McAlertStatus.active);
+    expect(alert.manual, isFalse);
+    expect(alert.suggestedDynamic!.type, McDynamicType.shortBreak);
+    expect(alert.suggestedDynamic!.title('en'), 'Show-of-hands question');
+    expect(alert.breakEndsAt, DateTime.utc(2026, 11, 19, 20, 5));
+  });
+
+  test('entrega las alertas MC del canal como eventos', () async {
+    final List<FakeChannel> channels = <FakeChannel>[];
+    final LiveTelemetryService service = LiveTelemetryService(
+      channelFactory: (Uri uri) {
+        final FakeChannel channel = FakeChannel(uri);
+        channels.add(channel);
+        return channel;
+      },
+    );
+    final List<TelemetryEvent> events = <TelemetryEvent>[];
+    final StreamSubscription<TelemetryEvent> sub = service
+        .watch(pairedSession)
+        .listen(events.add);
+    await Future<void>.delayed(Duration.zero);
+    channels.single.incoming.add(
+      jsonEncode(<String, dynamic>{'type': 'mc_alert', 'alert': alertJson()}),
+    );
+    channels.single.incoming.add(
+      jsonEncode(<String, dynamic>{'type': 'mc_alert'}),
+    );
+    await Future<void>.delayed(Duration.zero);
+    final List<McAlert> alerts = events
+        .where((TelemetryEvent e) => e.mcAlert != null)
+        .map((TelemetryEvent e) => e.mcAlert!)
+        .toList();
+    expect(alerts.single.id, 'alert-1');
+    await sub.cancel();
+  });
+
+  test(
+    'responde la alerta con el token del monitor, no con la sesión de asistente',
+    () async {
+      HttpClient.setAuthToken('token-asistente');
+      late http.Request captured;
+      final MockClient client = MockClient((http.Request request) async {
+        captured = request;
+        return http.Response(jsonEncode(alertJson(status: 'APPLIED')), 200);
+      });
+      final LiveTelemetryService service = LiveTelemetryService(
+        httpClient: HttpClient(client: client),
+      );
+      final McAlert updated = await service.respondMcAlert(
+        pairedSession,
+        'alert-1',
+        McAlertAction.apply,
+      );
+      expect(captured.url.path, endsWith('/live/mc/alerts/alert-1/apply'));
+      expect(captured.headers['Authorization'], 'Bearer monitor-token');
+      expect(updated.status, McAlertStatus.applied);
+    },
+  );
+
+  testWidgets('el monitor muestra la tarjeta del MC y envía la respuesta', (
+    WidgetTester tester,
+  ) async {
+    final FakeTelemetryService service = FakeTelemetryService();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LiveMonitorScreen(languageCode: 'es', service: service),
+      ),
+    );
+    await tester.enterText(
+      find.byKey(const Key('monitor-code-field')),
+      'K7P2QX',
+    );
+    await tester.tap(find.byKey(const Key('pair-button')));
+    await tester.pumpAndSettle();
+
+    service.events.add(TelemetryEvent.mcAlert(McAlert.fromJson(alertJson())));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byKey(const Key('mc-alert-card')), findsOneWidget);
+    expect(find.text('La atención está bajando'), findsOneWidget);
+    expect(find.text('Lanzar pregunta'), findsOneWidget);
+    expect(find.byKey(const Key('mc-request')), findsNothing);
+
+    await tester.ensureVisible(find.byKey(const Key('mc-dismiss')));
+    await tester.tap(find.byKey(const Key('mc-dismiss')));
+    await tester.pump();
+    expect(service.actions, <McAlertAction>[McAlertAction.dismiss]);
+    await tester.pump(const Duration(seconds: 5));
+    expect(find.byKey(const Key('mc-alert-card')), findsNothing);
+    expect(find.byKey(const Key('mc-request')), findsOneWidget);
+  });
+
+  testWidgets('la tarjeta muestra la cuenta regresiva de la pausa', (
+    WidgetTester tester,
+  ) async {
+    bool finished = false;
+    final DateTime start = DateTime.utc(2026, 11, 19, 20);
+    DateTime now = start;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: McAlertCard(
+            alert: McAlert.fromJson(
+              alertJson(
+                status: 'APPLIED',
+                type: 'SHORT_BREAK',
+                breakEndsAt: '2026-11-19T20:00:02Z',
+              ),
+            ),
+            strings: const LiveMonitorStrings('es'),
+            languageCode: 'es',
+            onAction: (_) {},
+            onBreakFinished: () => finished = true,
+            clock: () => now,
+          ),
+        ),
+      ),
+    );
+    expect(find.textContaining('0:02'), findsOneWidget);
+    now = start.add(const Duration(seconds: 2));
+    await tester.pump(const Duration(seconds: 1));
+    expect(finished, isTrue);
   });
 }

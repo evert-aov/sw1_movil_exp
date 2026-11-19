@@ -182,3 +182,150 @@ class MonitorSession {
   /// Indica si el token ya venció.
   bool get isExpired => DateTime.now().toUtc().isAfter(expiresAt);
 }
+
+/// Tipo de dinámica sugerida por el Asistente de Maestro de Ceremonias (HU-19).
+enum McDynamicType {
+  /// Pregunta o interacción breve con el público.
+  audienceQuestion('AUDIENCE_QUESTION'),
+
+  /// Pausa activa con movimiento.
+  activeBreak('ACTIVE_BREAK'),
+
+  /// Descanso corto.
+  shortBreak('SHORT_BREAK');
+
+  /// Valor que usa el backend.
+  final String apiValue;
+
+  const McDynamicType(this.apiValue);
+
+  /// Convierte el valor del backend; los desconocidos se tratan como pregunta al público.
+  static McDynamicType fromApi(Object? value) {
+    return McDynamicType.values.firstWhere(
+      (McDynamicType type) => type.apiValue == value,
+      orElse: () => McDynamicType.audienceQuestion,
+    );
+  }
+}
+
+/// Estado de una alerta del Asistente MC (HU-18).
+enum McAlertStatus {
+  /// Esperando respuesta del moderador.
+  active,
+
+  /// Dinámica aplicada.
+  applied,
+
+  /// Sugerencia descartada.
+  dismissed,
+
+  /// La atención se recuperó sola.
+  expired;
+
+  /// Convierte el valor del backend (`ACTIVE`, `APPLIED`, `DISMISSED`, `EXPIRED`).
+  static McAlertStatus fromApi(Object? value) {
+    switch (value) {
+      case 'APPLIED':
+        return McAlertStatus.applied;
+      case 'DISMISSED':
+        return McAlertStatus.dismissed;
+      case 'EXPIRED':
+        return McAlertStatus.expired;
+    }
+    return McAlertStatus.active;
+  }
+}
+
+/// Dinámica del catálogo del Asistente MC con textos en español e inglés (HU-19).
+class McDynamic {
+  /// Tipo de dinámica.
+  final McDynamicType type;
+
+  /// Duración estimada en minutos.
+  final int durationMinutes;
+
+  /// Títulos por idioma.
+  final String titleEs;
+  final String titleEn;
+
+  /// Instrucciones por idioma.
+  final String instructionsEs;
+  final String instructionsEn;
+
+  /// Crea una dinámica.
+  const McDynamic({
+    required this.type,
+    required this.durationMinutes,
+    required this.titleEs,
+    required this.titleEn,
+    required this.instructionsEs,
+    required this.instructionsEn,
+  });
+
+  /// Construye la dinámica desde el JSON del backend.
+  factory McDynamic.fromJson(Map<String, dynamic> json) {
+    return McDynamic(
+      type: McDynamicType.fromApi(json['dynamic_type']),
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
+      titleEs: json['title_es'] as String? ?? '',
+      titleEn: json['title_en'] as String? ?? '',
+      instructionsEs: json['instructions_es'] as String? ?? '',
+      instructionsEn: json['instructions_en'] as String? ?? '',
+    );
+  }
+
+  /// Título en el idioma [languageCode].
+  String title(String languageCode) => languageCode == 'en' ? titleEn : titleEs;
+
+  /// Instrucciones en el idioma [languageCode].
+  String instructions(String languageCode) =>
+      languageCode == 'en' ? instructionsEn : instructionsEs;
+}
+
+/// Alerta de desatención sostenida con la dinámica propuesta (HU-18 / HU-19).
+class McAlert {
+  /// ID de la alerta.
+  final String id;
+
+  /// Estado vigente.
+  final McAlertStatus status;
+
+  /// Verdadero si la pidió el moderador en vez de la regla automática.
+  final bool manual;
+
+  /// Segundos de atención baja sostenida.
+  final int lowAttentionSeconds;
+
+  /// Fin de la pausa aplicada, si la dinámica es un descanso.
+  final DateTime? breakEndsAt;
+
+  /// Dinámica sugerida.
+  final McDynamic? suggestedDynamic;
+
+  /// Crea una alerta.
+  const McAlert({
+    required this.id,
+    required this.status,
+    required this.manual,
+    required this.lowAttentionSeconds,
+    required this.breakEndsAt,
+    required this.suggestedDynamic,
+  });
+
+  /// Construye la alerta desde el JSON del backend.
+  factory McAlert.fromJson(Map<String, dynamic> json) {
+    final Object? rawDynamic = json['dynamic'];
+    final String? breakEnds = json['break_ends_at'] as String?;
+    return McAlert(
+      id: json['id'] as String,
+      status: McAlertStatus.fromApi(json['status']),
+      manual: json['trigger'] == 'MANUAL_REQUEST',
+      lowAttentionSeconds:
+          (json['low_attention_seconds'] as num?)?.toInt() ?? 0,
+      breakEndsAt: breakEnds == null ? null : DateTime.parse(breakEnds).toUtc(),
+      suggestedDynamic: rawDynamic is Map<String, dynamic>
+          ? McDynamic.fromJson(rawDynamic)
+          : null,
+    );
+  }
+}

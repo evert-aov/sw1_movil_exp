@@ -30,7 +30,10 @@ class TelemetryEvent {
   /// Nueva instantánea, si el evento es de datos.
   final LiveTelemetrySnapshot? snapshot;
 
-  const TelemetryEvent._({this.connection, this.snapshot});
+  /// Alerta del Asistente MC creada o actualizada (HU-18).
+  final McAlert? mcAlert;
+
+  const TelemetryEvent._({this.connection, this.snapshot, this.mcAlert});
 
   /// Crea un evento de cambio de conexión.
   const TelemetryEvent.connection(TelemetryConnectionState state)
@@ -39,6 +42,21 @@ class TelemetryEvent {
   /// Crea un evento con una instantánea.
   const TelemetryEvent.snapshot(LiveTelemetrySnapshot data)
     : this._(snapshot: data);
+
+  /// Crea un evento con una alerta del Asistente MC.
+  const TelemetryEvent.mcAlert(McAlert alert) : this._(mcAlert: alert);
+}
+
+/// Respuesta del moderador a una alerta del Asistente MC (HU-19).
+enum McAlertAction {
+  /// Aplicar la dinámica (si es una pausa, inicia su temporizador).
+  apply,
+
+  /// Descartar la sugerencia.
+  dismiss,
+
+  /// Pedir otra dinámica para la misma alerta.
+  next,
 }
 
 /// Error emitido cuando el servidor rechaza la vinculación (código 4401, 4403 o 4404).
@@ -90,6 +108,37 @@ class LiveTelemetryService {
       'code': normalized,
     });
     return MonitorSession.fromJson(response as Map<String, dynamic>);
+  }
+
+  /// Cabeceras que autentican al monitor vinculado en lugar de la sesión de asistente.
+  Map<String, String> _monitorHeaders(MonitorSession session) {
+    return <String, String>{'Authorization': 'Bearer ${session.token}'};
+  }
+
+  /// HU-19: responde la alerta [alertId] con la [action] elegida en el monitor.
+  ///
+  /// Lanza [ApiException] si la alerta ya fue atendida o la vinculación no es válida.
+  Future<McAlert> respondMcAlert(
+    MonitorSession session,
+    String alertId,
+    McAlertAction action,
+  ) async {
+    final dynamic response = await _http.post(
+      '/live/mc/alerts/${Uri.encodeComponent(alertId)}/${action.name}',
+      <String, dynamic>{},
+      headers: _monitorHeaders(session),
+    );
+    return McAlert.fromJson(response as Map<String, dynamic>);
+  }
+
+  /// HU-19: pide una dinámica al Asistente MC sin esperar la alerta automática.
+  Future<McAlert> requestMcDynamic(MonitorSession session) async {
+    final dynamic response = await _http.post(
+      '/live/mc/sessions/${Uri.encodeComponent(session.sessionId)}/request',
+      <String, dynamic>{},
+      headers: _monitorHeaders(session),
+    );
+    return McAlert.fromJson(response as Map<String, dynamic>);
   }
 
   /// Construye la URL `ws://` o `wss://` del canal de telemetría de la [session].
@@ -172,9 +221,9 @@ class LiveTelemetryService {
               current.sink.add(jsonEncode(<String, String>{'type': 'ping'}));
             });
           }
-          final LiveTelemetrySnapshot? snapshot = _parse(message);
-          if (snapshot != null) {
-            controller.add(TelemetryEvent.snapshot(snapshot));
+          final TelemetryEvent? event = _parse(message);
+          if (event != null) {
+            controller.add(event);
           }
         },
         onError: (Object _) {},
@@ -195,13 +244,20 @@ class LiveTelemetryService {
     return controller.stream;
   }
 
-  /// Interpreta un mensaje y descarta los que no son instantáneas (por ejemplo `pong`).
-  LiveTelemetrySnapshot? _parse(dynamic message) {
+  /// Interpreta un mensaje del canal: instantánea (HU-17) o alerta del Asistente MC (HU-18).
+  ///
+  /// Descarta los demás mensajes (por ejemplo `pong`).
+  TelemetryEvent? _parse(dynamic message) {
     if (message is! String) return null;
     try {
       final dynamic decoded = jsonDecode(message);
-      if (decoded is Map<String, dynamic> && decoded['type'] == 'telemetry') {
-        return LiveTelemetrySnapshot.fromJson(decoded);
+      if (decoded is! Map<String, dynamic>) return null;
+      if (decoded['type'] == 'telemetry') {
+        return TelemetryEvent.snapshot(LiveTelemetrySnapshot.fromJson(decoded));
+      }
+      final Object? alert = decoded['alert'];
+      if (decoded['type'] == 'mc_alert' && alert is Map<String, dynamic>) {
+        return TelemetryEvent.mcAlert(McAlert.fromJson(alert));
       }
     } catch (_) {
       return null;
