@@ -141,6 +141,31 @@ class LiveTelemetryService {
     return McAlert.fromJson(response as Map<String, dynamic>);
   }
 
+  /// HU-18: registra el token push del celular para recibir alertas aunque la app esté cerrada.
+  ///
+  /// El registro dura lo mismo que la vinculación del monitor.
+  Future<void> registerPushDevice(
+    MonitorSession session,
+    String fcmToken,
+    String languageCode,
+  ) async {
+    await _http.post('/live/mc/monitor/push-device', <String, dynamic>{
+      'fcm_token': fcmToken,
+      'platform': 'android',
+      'language': languageCode == 'en' ? 'en' : 'es',
+    }, headers: _monitorHeaders(session));
+  }
+
+  /// HU-18: deja de enviar alertas push a este celular (al desvincular el monitor).
+  Future<void> unregisterPushDevice(
+    MonitorSession session,
+    String fcmToken,
+  ) async {
+    await _http.post('/live/mc/monitor/push-device/remove', <String, dynamic>{
+      'fcm_token': fcmToken,
+    }, headers: _monitorHeaders(session));
+  }
+
   /// Construye la URL `ws://` o `wss://` del canal de telemetría de la [session].
   Uri buildStreamUri(MonitorSession session) {
     final String wsBase = ApiConstants.baseUrl.replaceFirst(

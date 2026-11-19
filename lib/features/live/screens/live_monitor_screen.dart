@@ -8,6 +8,8 @@ import '../../../core/theme/app_colors.dart';
 import '../live_monitor_strings.dart';
 import '../models/live_telemetry_model.dart';
 import '../services/live_telemetry_service.dart';
+import '../services/monitor_push_service.dart';
+import '../services/monitor_session_store.dart';
 import '../widgets/mc_alert_card.dart';
 import '../widgets/pulse_sparkline.dart';
 import '../widgets/telemetry_traffic_light.dart';
@@ -26,11 +28,15 @@ class LiveMonitorScreen extends StatefulWidget {
   /// Servicio inyectable para pruebas.
   final LiveTelemetryService? service;
 
+  /// Fuente del token push inyectable para pruebas (por defecto Firebase).
+  final PushTokenProvider? pushTokenProvider;
+
   /// Crea la pantalla del monitor.
   const LiveMonitorScreen({
     super.key,
     required this.languageCode,
     this.service,
+    this.pushTokenProvider,
   });
 
   @override
@@ -41,6 +47,10 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
   late final LiveTelemetryService _service =
       widget.service ?? LiveTelemetryService();
   late final LiveMonitorStrings _t = LiveMonitorStrings(widget.languageCode);
+  late final PushTokenProvider _push =
+      widget.pushTokenProvider ?? FirebasePushTokenProvider();
+  String? _pushToken;
+  StreamSubscription<String>? _pushRefresh;
   final TextEditingController _codeController = TextEditingController();
 
   MonitorSession? _session;
@@ -57,9 +67,22 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
   static const Duration _mcResolvedVisible = Duration(seconds: 4);
 
   @override
+  void initState() {
+    super.initState();
+    // Retoma la vinculación vigente si se salió de la pantalla con "atrás"
+    final MonitorSession? saved = MonitorSessionStore.current;
+    if (saved != null) {
+      _session = saved;
+      _listen(saved);
+      unawaited(_registerPush(saved));
+    }
+  }
+
+  @override
   void dispose() {
     _subscription?.cancel();
     _mcClearTimer?.cancel();
+    _pushRefresh?.cancel();
     _codeController.dispose();
     super.dispose();
   }
@@ -78,11 +101,13 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
     try {
       final MonitorSession session = await _service.redeemCode(code);
       if (!mounted) return;
+      MonitorSessionStore.save(session);
       setState(() {
         _session = session;
         _pairing = false;
       });
       _listen(session);
+      unawaited(_registerPush(session));
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -104,8 +129,42 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
     }, onError: (Object _) => _unpair(error: _t.tr('denied')));
   }
 
+  /// HU-18: registra este celular para recibir las alertas del Asistente MC como push.
+  ///
+  /// Si no hay Firebase o el usuario niega el permiso, el monitor sigue funcionando sin push.
+  Future<void> _registerPush(MonitorSession session) async {
+    final String? token = await _push.obtainToken();
+    if (token == null || !mounted || _session != session) return;
+    try {
+      await _service.registerPushDevice(session, token, widget.languageCode);
+      _pushToken = token;
+      _pushRefresh?.cancel();
+      _pushRefresh = _push.onTokenRefresh.listen((String fresh) async {
+        final MonitorSession? current = _session;
+        if (current == null) return;
+        await _service.registerPushDevice(current, fresh, widget.languageCode);
+        _pushToken = fresh;
+      });
+    } on ApiException catch (error) {
+      debugPrint('No se pudo registrar el push del monitor: ${error.message}');
+    }
+  }
+
   /// Cierra el canal y vuelve al ingreso de código.
   void _unpair({String? error}) {
+    final MonitorSession? session = _session;
+    final String? pushToken = _pushToken;
+    if (session != null && pushToken != null) {
+      unawaited(
+        _service
+            .unregisterPushDevice(session, pushToken)
+            .catchError((Object _) {}),
+      );
+    }
+    _pushToken = null;
+    _pushRefresh?.cancel();
+    _pushRefresh = null;
+    MonitorSessionStore.clear();
     _subscription?.cancel();
     _subscription = null;
     if (!mounted) return;

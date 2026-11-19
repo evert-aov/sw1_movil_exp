@@ -5,6 +5,8 @@ import 'package:experiencia_movil/core/network/http_client.dart';
 import 'package:experiencia_movil/features/live/models/live_telemetry_model.dart';
 import 'package:experiencia_movil/features/live/screens/live_monitor_screen.dart';
 import 'package:experiencia_movil/features/live/services/live_telemetry_service.dart';
+import 'package:experiencia_movil/features/live/services/monitor_push_service.dart';
+import 'package:experiencia_movil/features/live/services/monitor_session_store.dart';
 import 'package:experiencia_movil/features/live/live_monitor_strings.dart';
 import 'package:experiencia_movil/features/live/widgets/mc_alert_card.dart';
 import 'package:experiencia_movil/features/live/widgets/pulse_sparkline.dart';
@@ -120,6 +122,25 @@ class FakeTelemetryService extends LiveTelemetryService {
   Stream<TelemetryEvent> watch(MonitorSession session) => events.stream;
 
   final List<McAlertAction> actions = <McAlertAction>[];
+  final List<String> pushRegistered = <String>[];
+  final List<String> pushRemoved = <String>[];
+
+  @override
+  Future<void> registerPushDevice(
+    MonitorSession session,
+    String fcmToken,
+    String languageCode,
+  ) async {
+    pushRegistered.add('$fcmToken/$languageCode');
+  }
+
+  @override
+  Future<void> unregisterPushDevice(
+    MonitorSession session,
+    String fcmToken,
+  ) async {
+    pushRemoved.add(fcmToken);
+  }
 
   @override
   Future<McAlert> respondMcAlert(
@@ -134,6 +155,20 @@ class FakeTelemetryService extends LiveTelemetryService {
       ),
     );
   }
+}
+
+/// Proveedor de token push falso (sin Firebase).
+class FakePushTokenProvider implements PushTokenProvider {
+  final String? token;
+  final StreamController<String> refreshes = StreamController<String>();
+
+  FakePushTokenProvider(this.token);
+
+  @override
+  Future<String?> obtainToken() async => token;
+
+  @override
+  Stream<String> get onTokenRefresh => refreshes.stream;
 }
 
 /// JSON de una alerta del Asistente MC como la emite el backend (HU-18).
@@ -169,7 +204,10 @@ Map<String, dynamic> alertJson({
 }
 
 void main() {
-  setUp(() => HttpClient.setAuthToken(null));
+  setUp(() {
+    HttpClient.setAuthToken(null);
+    MonitorSessionStore.clear();
+  });
 
   test('interpreta la instantánea del backend', () {
     final LiveTelemetrySnapshot snapshot = LiveTelemetrySnapshot.fromJson(
@@ -480,5 +518,101 @@ void main() {
     now = start.add(const Duration(seconds: 2));
     await tester.pump(const Duration(seconds: 1));
     expect(finished, isTrue);
+  });
+
+  testWidgets('al vincular registra el push y al desvincular lo da de baja', (
+    WidgetTester tester,
+  ) async {
+    final FakeTelemetryService service = FakeTelemetryService();
+    final FakePushTokenProvider push = FakePushTokenProvider('fcm-token-123');
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LiveMonitorScreen(
+          languageCode: 'en',
+          service: service,
+          pushTokenProvider: push,
+        ),
+      ),
+    );
+    await tester.enterText(
+      find.byKey(const Key('monitor-code-field')),
+      'K7P2QX',
+    );
+    await tester.tap(find.byKey(const Key('pair-button')));
+    await tester.pumpAndSettle();
+    expect(service.pushRegistered, <String>['fcm-token-123/en']);
+
+    push.refreshes.add('fcm-token-456');
+    await tester.pump();
+    expect(service.pushRegistered.last, 'fcm-token-456/en');
+
+    await tester.tap(find.byKey(const Key('unpair-button')));
+    await tester.pumpAndSettle();
+    expect(service.pushRemoved, <String>['fcm-token-456']);
+  });
+
+  testWidgets('sin token push el monitor funciona igual', (
+    WidgetTester tester,
+  ) async {
+    final FakeTelemetryService service = FakeTelemetryService();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LiveMonitorScreen(
+          languageCode: 'es',
+          service: service,
+          pushTokenProvider: FakePushTokenProvider(null),
+        ),
+      ),
+    );
+    await tester.enterText(
+      find.byKey(const Key('monitor-code-field')),
+      'K7P2QX',
+    );
+    await tester.tap(find.byKey(const Key('pair-button')));
+    await tester.pumpAndSettle();
+    expect(service.pushRegistered, isEmpty);
+    expect(find.text('Noche de Jazz'), findsOneWidget);
+  });
+
+  testWidgets('al descartar muestra "Sugerencia descartada", no "aplicada"', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: McAlertCard(
+            alert: McAlert.fromJson(alertJson(status: 'DISMISSED')),
+            strings: const LiveMonitorStrings('es'),
+            languageCode: 'es',
+            onAction: (_) {},
+          ),
+        ),
+      ),
+    );
+    expect(find.text('Sugerencia descartada'), findsOneWidget);
+    expect(find.text('Dinámica aplicada'), findsNothing);
+  });
+
+  testWidgets('al volver al monitor retoma la vinculación sin pedir código', (
+    WidgetTester tester,
+  ) async {
+    final FakeTelemetryService service = FakeTelemetryService();
+    MonitorSessionStore.save(pairedSession);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LiveMonitorScreen(
+          languageCode: 'es',
+          service: service,
+          pushTokenProvider: FakePushTokenProvider(null),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.byKey(const Key('monitor-code-field')), findsNothing);
+    expect(find.text('Noche de Jazz'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('unpair-button')));
+    await tester.pumpAndSettle();
+    expect(MonitorSessionStore.current, isNull);
   });
 }

@@ -53,6 +53,7 @@ class LiveMonitorStrings {
       'mc_break_ends': 'El público regresa en',
       'mc_applied': 'Dinámica aplicada',
       'mc_expired': 'La atención se recuperó',
+      'mc_dismissed': 'Sugerencia descartada',
       'mc_error': 'No se pudo responder la alerta.',
     },
     'en': {
@@ -98,6 +99,7 @@ class LiveMonitorStrings {
       'mc_break_ends': 'Audience returns in',
       'mc_applied': 'Dynamic applied',
       'mc_expired': 'Attention recovered',
+      'mc_dismissed': 'Suggestion dismissed',
       'mc_error': 'The alert could not be answered.',
     },
   };

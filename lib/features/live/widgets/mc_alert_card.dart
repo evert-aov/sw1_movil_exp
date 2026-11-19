@@ -200,6 +200,19 @@ class _McAlertCardState extends State<McAlertCard> {
     );
   }
 
+  /// Clave del texto del resultado según cómo terminó la alerta.
+  String _resolvedKey(McAlertStatus status) {
+    switch (status) {
+      case McAlertStatus.dismissed:
+        return 'mc_dismissed';
+      case McAlertStatus.expired:
+        return 'mc_expired';
+      case McAlertStatus.active:
+      case McAlertStatus.applied:
+        return 'mc_applied';
+    }
+  }
+
   Widget _buildResolved(BuildContext context, McAlert alert) {
     final ThemeData theme = Theme.of(context);
     final LiveMonitorStrings t = widget.strings;
@@ -223,15 +236,18 @@ class _McAlertCardState extends State<McAlertCard> {
     }
     return Row(
       children: <Widget>[
-        const Icon(
-          Icons.check_circle_outline_rounded,
-          color: AppColors.emeraldSuccess,
+        Icon(
+          alert.status == McAlertStatus.dismissed
+              ? Icons.close_rounded
+              : Icons.check_circle_outline_rounded,
+          color: alert.status == McAlertStatus.dismissed
+              ? theme.colorScheme.onSurfaceVariant
+              : AppColors.emeraldSuccess,
         ),
         const SizedBox(width: 10),
         Text(
-          t.tr(
-            alert.status == McAlertStatus.expired ? 'mc_expired' : 'mc_applied',
-          ),
+          t.tr(_resolvedKey(alert.status)),
+          key: const Key('mc-resolved'),
           style: theme.textTheme.titleSmall,
         ),
       ],

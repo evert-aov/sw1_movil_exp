@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "41633753912",
+    "project_id": "experiencia-sw1",
+    "storage_bucket": "experiencia-sw1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:41633753912:android:cc78397038c8c0ed36efcd",
+        "android_client_info": {
+          "package_name": "com.experiencia.experiencia_movil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGayZ2jUhn3x0fYn97ZBesOTdT3gtWc58"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

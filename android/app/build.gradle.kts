@@ -4,6 +4,12 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// HU-18: el push del Asistente MC usa Firebase. El plugin solo se aplica si existe
+// google-services.json; sin ese archivo la app compila igual y funciona sin notificaciones push.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.experiencia.experiencia_movil"
     compileSdk = flutter.compileSdkVersion

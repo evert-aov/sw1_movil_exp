@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- HU-18: notificaciones push del Asistente MC (Android 13+ pide permiso explícito) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="experiencia_movil"
         android:name="${applicationName}"
