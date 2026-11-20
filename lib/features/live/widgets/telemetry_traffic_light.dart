@@ -45,8 +45,9 @@ class TelemetryTrafficLight extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F172A),
+          color: AppColors.darkSurface,
           borderRadius: BorderRadius.circular(lampSize),
+          border: Border.all(color: AppColors.darkBorder),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

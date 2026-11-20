@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../models/experience_model.dart';
 
 /// Tarjeta visual cohesiva para representar un ítem de [ExperienceModel] en el catálogo móvil.
@@ -64,6 +65,7 @@ class ExperienceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final bool confirmed = experience.isConfirmed;
+    final Color accent = AppColors.accent(isDark);
 
     final Color quorumBg = confirmed
         ? (isDark ? AppColors.emeraldBgDark : AppColors.emeraldBgLight)
@@ -74,17 +76,16 @@ class ExperienceCard extends StatelessWidget {
         : AppColors.amberWarning.withValues(alpha: isDark ? 0.4 : 0.35);
 
     final Color quorumText = confirmed
-        ? (isDark ? const Color(0xFF34D399) : const Color(0xFF047857))
-        : (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309));
+        ? (isDark ? AppColors.emeraldTextDark : AppColors.emeraldTextLight)
+        : (isDark ? AppColors.amberTextDark : AppColors.amberTextLight);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        color: AppColors.card(isDark),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
+        border: Border.all(color: AppColors.border(isDark)),
+        boxShadow: AppColors.cardShadow(isDark),
       ),
       child: InkWell(
         onTap: onTap,
@@ -92,31 +93,53 @@ class ExperienceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            // Imagen de portada con insignias de categoría y modalidad (solo iconos)
+            // Imagen editorial dominante con píldoras de categoría y modalidad
             Stack(
               children: <Widget>[
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
+                    top: Radius.circular(19),
                   ),
-                  child: Image.network(
-                    experience.coverImageUrl ?? '',
-                    height: 164,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 164,
-                      color: isDark
-                          ? AppColors.darkSurfaceElevated
-                          : AppColors.lightSurfaceElevated,
-                      child: const Center(
-                        child: Icon(
-                          Icons.image_outlined,
-                          size: 40,
-                          color: AppColors.primaryVioletLight,
+                  child: Stack(
+                    children: <Widget>[
+                      Image.network(
+                        experience.coverImageUrl ?? '',
+                        height: 192,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 192,
+                          color: AppColors.surfaceSoft(isDark),
+                          child: Center(
+                            child: Icon(
+                              Icons.photo_outlined,
+                              size: 40,
+                              color: accent.withValues(alpha: 0.7),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: <Color>[
+                                AppColors.darkBackground.withValues(
+                                  alpha: 0.18,
+                                ),
+                                Colors.transparent,
+                                AppColors.darkBackground.withValues(
+                                  alpha: 0.28,
+                                ),
+                              ],
+                              stops: const <double>[0.0, 0.45, 1.0],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Positioned(
@@ -124,19 +147,20 @@ class ExperienceCard extends StatelessWidget {
                   left: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
+                      horizontal: 11,
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryViolet,
-                      borderRadius: BorderRadius.circular(8),
+                      color: accent,
+                      borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       i18n.translateCategory(experience.categoryName),
-                      style: const TextStyle(
+                      style: AppTypography.sans(
                         color: Colors.white,
-                        fontSize: 11,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
                       ),
                     ),
                   ),
@@ -150,8 +174,8 @@ class ExperienceCard extends StatelessWidget {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.72),
-                      borderRadius: BorderRadius.circular(20),
+                      color: AppColors.darkBackground.withValues(alpha: 0.78),
+                      borderRadius: BorderRadius.circular(999),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -159,14 +183,14 @@ class ExperienceCard extends StatelessWidget {
                         Icon(
                           _getModalityIcon(experience.modality),
                           size: 13,
-                          color: Colors.white,
+                          color: AppColors.darkTextPrimary,
                         ),
                         const SizedBox(width: 5),
                         Text(
                           _getModalityLabel(experience.modality),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
+                          style: AppTypography.sans(
+                            color: AppColors.darkTextPrimary,
+                            fontSize: 10.5,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -177,9 +201,9 @@ class ExperienceCard extends StatelessWidget {
               ],
             ),
 
-            // Contenido de la tarjeta
+            // Contenido editorial de la tarjeta
             Padding(
-              padding: const EdgeInsets.all(15),
+              padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -192,19 +216,15 @@ class ExperienceCard extends StatelessWidget {
                           Icon(
                             Icons.calendar_today_outlined,
                             size: 13,
-                            color: isDark
-                                ? AppColors.darkTextSecondary
-                                : AppColors.lightTextSecondary,
+                            color: AppColors.textSecondary(isDark),
                           ),
                           const SizedBox(width: 5),
                           Text(
                             _formatEventDate(experience.eventDate),
-                            style: TextStyle(
+                            style: AppTypography.sans(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? AppColors.darkTextSecondary
-                                  : AppColors.lightTextSecondary,
+                              color: AppColors.textSecondary(isDark),
                             ),
                           ),
                         ],
@@ -212,17 +232,17 @@ class ExperienceCard extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          const Icon(
+                          Icon(
                             Icons.location_on_outlined,
                             size: 14,
-                            color: AppColors.primaryVioletLight,
+                            color: accent,
                           ),
                           const SizedBox(width: 3),
                           Text(
                             experience.zone ?? '',
-                            style: const TextStyle(
+                            style: AppTypography.sans(
                               fontSize: 11.5,
-                              color: AppColors.primaryVioletLight,
+                              color: accent,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -230,38 +250,35 @@ class ExperienceCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     experience.title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
-                      height: 1.25,
+                    style: AppTypography.editorial(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary(isDark),
+                      height: 1.24,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 6),
                   Text(
                     experience.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: AppTypography.sans(
                       fontSize: 12.5,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
-                      height: 1.35,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary(isDark),
+                      height: 1.45,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
-                  // Indicador de Quórum Mínimo con iconos
+                  // Indicador de Quórum Mínimo
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                      vertical: 9,
+                      horizontal: 12,
+                      vertical: 10,
                     ),
                     decoration: BoxDecoration(
                       color: quorumBg,
@@ -289,7 +306,7 @@ class ExperienceCard extends StatelessWidget {
                                   confirmed
                                       ? i18n.tr('status_confirmed')
                                       : '${i18n.tr('status_pending_slots')} ${experience.slotsRemainingForQuorum}',
-                                  style: TextStyle(
+                                  style: AppTypography.sans(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
                                     color: quorumText,
@@ -299,12 +316,10 @@ class ExperienceCard extends StatelessWidget {
                             ),
                             Text(
                               '${experience.reservedSlots}/${experience.maxCapacity}',
-                              style: TextStyle(
+                              style: AppTypography.sans(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w800,
-                                color: isDark
-                                    ? AppColors.darkTextPrimary
-                                    : AppColors.lightTextPrimary,
+                                color: AppColors.textPrimary(isDark),
                               ),
                             ),
                           ],
@@ -317,7 +332,9 @@ class ExperienceCard extends StatelessWidget {
                             minHeight: 5,
                             backgroundColor: isDark
                                 ? Colors.white.withValues(alpha: 0.1)
-                                : Colors.black.withValues(alpha: 0.08),
+                                : AppColors.lightTextPrimary.withValues(
+                                    alpha: 0.08,
+                                  ),
                             valueColor: AlwaysStoppedAnimation<Color>(
                               confirmed
                                   ? AppColors.emeraldSuccess
@@ -331,20 +348,18 @@ class ExperienceCard extends StatelessWidget {
                           children: <Widget>[
                             Text(
                               '${i18n.tr('min_goal')}: ${experience.minCapacity} ${i18n.tr('people')}',
-                              style: TextStyle(
+                              style: AppTypography.sans(
                                 fontSize: 10,
-                                color: isDark
-                                    ? AppColors.darkTextSecondary
-                                    : AppColors.lightTextSecondary,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary(isDark),
                               ),
                             ),
                             Text(
                               '${i18n.tr('max_cap')}: ${experience.maxCapacity}',
-                              style: TextStyle(
+                              style: AppTypography.sans(
                                 fontSize: 10,
-                                color: isDark
-                                    ? AppColors.darkTextSecondary
-                                    : AppColors.lightTextSecondary,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textSecondary(isDark),
                               ),
                             ),
                           ],
@@ -352,9 +367,9 @@ class ExperienceCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
-                  // Precio y botón de detalle
+                  // Precio y botón editorial de detalle
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
@@ -363,22 +378,18 @@ class ExperienceCard extends StatelessWidget {
                         children: <Widget>[
                           Text(
                             i18n.tr('price_per_person'),
-                            style: TextStyle(
+                            style: AppTypography.sans(
                               fontSize: 10.5,
-                              color: isDark
-                                  ? AppColors.darkTextSecondary
-                                  : AppColors.lightTextSecondary,
+                              color: AppColors.textSecondary(isDark),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           Text(
                             'Bs. ${experience.price.toStringAsFixed(0)}',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: isDark
-                                  ? AppColors.darkTextPrimary
-                                  : AppColors.lightTextPrimary,
+                            style: AppTypography.editorial(
+                              fontSize: 21,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary(isDark),
                             ),
                           ),
                         ],
@@ -386,11 +397,11 @@ class ExperienceCard extends StatelessWidget {
                       FilledButton.icon(
                         onPressed: onTap,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primaryViolet,
+                          backgroundColor: accent,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
+                            horizontal: 16,
+                            vertical: 11,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -399,9 +410,10 @@ class ExperienceCard extends StatelessWidget {
                         icon: const Icon(Icons.arrow_forward_rounded, size: 15),
                         label: Text(
                           i18n.tr('btn_view_detail'),
-                          style: const TextStyle(
+                          style: AppTypography.sans(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
+                            color: Colors.white,
                           ),
                         ),
                       ),

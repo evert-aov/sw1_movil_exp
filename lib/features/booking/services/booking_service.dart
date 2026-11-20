@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../../core/network/http_client.dart';
 import '../../../core/network/request_key.dart';
 import '../models/booking_request_model.dart';
@@ -48,9 +49,10 @@ class BookingService {
   );
 
   Future<Uri> checkout(String id) async {
-    final result =
-        await _client.post('/payments/checkout/$id', {})
-            as Map<String, dynamic>;
+    final String path = kIsWeb
+        ? '/payments/checkout/$id'
+        : '/payments/checkout/$id?platform=mobile';
+    final result = await _client.post(path, {}) as Map<String, dynamic>;
     final target = Uri.parse(result['checkout_url'] as String);
     if (target.scheme != 'https' || target.host != 'checkout.stripe.com') {
       throw const ApiException('La dirección de pago recibida no es válida.');

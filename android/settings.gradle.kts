@@ -8,7 +8,29 @@ pluginManagement {
             flutterSdkPath
         }
 
-    includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+    val flutterGradleDir =
+        run {
+            val sourceDir = file("$flutterSdkPath/packages/flutter_tools/gradle")
+            if (sourceDir.canWrite()) {
+                sourceDir
+            } else {
+                // NixOS / read-only SDK store: Gradle 9 requires included build directories to be writable.
+                val writableDir = file("../build/flutter_tools_gradle")
+                val marker = writableDir.resolve(".source_sdk_path")
+                val expectedMarker = "${sourceDir.absolutePath}:v2"
+                if (!marker.exists() || marker.readText() != expectedMarker) {
+                    writableDir.deleteRecursively()
+                    sourceDir.copyRecursively(writableDir, overwrite = true)
+                    writableDir.walkTopDown().forEach { it.setWritable(true) }
+                    // Remove Nixpkgs's Gradle-8 shim so Gradle 9 uses Flutter's settings.gradle.kts directly.
+                    writableDir.resolve("settings.gradle").delete()
+                    marker.writeText(expectedMarker)
+                }
+                writableDir
+            }
+        }
+
+    includeBuild(flutterGradleDir.absolutePath)
 
     repositories {
         google()

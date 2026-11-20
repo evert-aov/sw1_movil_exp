@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
 
@@ -21,7 +22,12 @@ class PushNotificationService {
 
   static final PushNotificationService instance = PushNotificationService._();
 
+  static const MethodChannel _nativeChannel = MethodChannel(
+    'com.experiencia.experiencia_movil/notifications',
+  );
+
   String? _fcmToken;
+  String? _lastJwtToken;
   bool _initialized = false;
 
   String? get fcmToken => _fcmToken;
@@ -46,9 +52,41 @@ class PushNotificationService {
         sound: true,
       );
 
+      await messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        final String title =
+            message.notification?.title ??
+            message.data['title']?.toString() ??
+            'EXPERIENCIA';
+        final String body =
+            message.notification?.body ??
+            message.data['body']?.toString() ??
+            '';
+        if (body.isEmpty && message.notification == null) return;
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          _nativeChannel
+              .invokeMethod<void>('showLocalNotification', <String, String>{
+                'title': title,
+                'body': body,
+              })
+              .catchError((Object e) {
+                debugPrint('No se pudo mostrar notificación local: $e');
+              });
+        }
+      });
+
       _fcmToken = await messaging.getToken();
       messaging.onTokenRefresh.listen((String newToken) {
         _fcmToken = newToken;
+        final String? jwt = _lastJwtToken;
+        if (jwt != null && jwt.isNotEmpty) {
+          registerForAuthenticatedUser(jwtToken: jwt);
+        }
       });
       _initialized = true;
     } catch (e) {
@@ -58,6 +96,9 @@ class PushNotificationService {
 
   /// Registra el token FCM del usuario autenticado para recibir push de reservas y eventos.
   Future<void> registerForAuthenticatedUser({required String jwtToken}) async {
+    if (jwtToken.isNotEmpty) {
+      _lastJwtToken = jwtToken;
+    }
     if (!_initialized) await initialize();
     final token = _fcmToken;
     if (token == null || token.isEmpty || jwtToken.isEmpty) return;

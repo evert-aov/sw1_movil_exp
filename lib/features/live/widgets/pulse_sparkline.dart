@@ -61,6 +61,7 @@ class PulseSparkline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color accentColor = Theme.of(context).colorScheme.primary;
     return SizedBox(
       height: height,
       width: double.infinity,
@@ -69,6 +70,7 @@ class PulseSparkline extends StatelessWidget {
           points: points,
           windowEnd: windowEnd,
           currentColor: currentColor,
+          accentColor: accentColor,
           gridColor: Theme.of(
             context,
           ).colorScheme.onSurface.withValues(alpha: 0.15),
@@ -82,12 +84,14 @@ class _PulsePainter extends CustomPainter {
   final List<PulsePoint> points;
   final DateTime windowEnd;
   final Color currentColor;
+  final Color accentColor;
   final Color gridColor;
 
   _PulsePainter({
     required this.points,
     required this.windowEnd,
     required this.currentColor,
+    required this.accentColor,
     required this.gridColor,
   });
 
@@ -129,12 +133,12 @@ class _PulsePainter extends CustomPainter {
 
     canvas.drawPath(
       area,
-      Paint()..color = AppColors.primaryVioletLight.withValues(alpha: 0.14),
+      Paint()..color = accentColor.withValues(alpha: 0.14),
     );
     canvas.drawPath(
       line,
       Paint()
-        ..color = AppColors.primaryVioletLight
+        ..color = accentColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.5
         ..strokeJoin = StrokeJoin.round
@@ -153,6 +157,7 @@ class _PulsePainter extends CustomPainter {
     return oldDelegate.points != points ||
         oldDelegate.windowEnd != windowEnd ||
         oldDelegate.currentColor != currentColor ||
+        oldDelegate.accentColor != accentColor ||
         oldDelegate.gridColor != gridColor;
   }
 }

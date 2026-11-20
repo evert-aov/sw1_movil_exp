@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../models/experience_model.dart';
 import '../../booking/screens/checkout_screen.dart';
 import '../../matching/screens/matching_screen.dart';
@@ -50,6 +51,7 @@ class ExperienceDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final bool confirmed = experience.isConfirmed;
+    final Color accent = AppColors.accent(isDark);
 
     final Color quorumBg = confirmed
         ? (isDark ? AppColors.emeraldBgDark : AppColors.emeraldBgLight)
@@ -60,17 +62,15 @@ class ExperienceDetailScreen extends StatelessWidget {
         : AppColors.amberWarning.withValues(alpha: 0.4);
 
     final Color quorumText = confirmed
-        ? (isDark ? const Color(0xFF34D399) : const Color(0xFF047857))
-        : (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309));
+        ? (isDark ? AppColors.emeraldTextDark : AppColors.emeraldTextLight)
+        : (isDark ? AppColors.amberTextDark : AppColors.amberTextLight);
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.86,
+      height: MediaQuery.of(context).size.height * 0.88,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
+        color: AppColors.surface(isDark),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(color: AppColors.border(isDark)),
       ),
       child: Column(
         children: <Widget>[
@@ -85,13 +85,17 @@ class ExperienceDetailScreen extends StatelessWidget {
                   width: 42,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkBorder : Colors.grey.shade300,
+                    color: AppColors.border(isDark),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded, size: 20),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 20,
+                    color: AppColors.textPrimary(isDark),
+                  ),
                 ),
               ],
             ),
@@ -101,25 +105,23 @@ class ExperienceDetailScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               children: <Widget>[
-                // Portada
+                // Portada editorial dominante
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(18),
                   child: Stack(
                     children: <Widget>[
                       Image.network(
                         experience.coverImageUrl ?? '',
-                        height: 200,
+                        height: 220,
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Container(
-                          height: 200,
-                          color: isDark
-                              ? AppColors.darkSurfaceElevated
-                              : AppColors.lightSurfaceElevated,
-                          child: const Icon(
-                            Icons.image_outlined,
+                          height: 220,
+                          color: AppColors.surfaceSoft(isDark),
+                          child: Icon(
+                            Icons.photo_outlined,
                             size: 48,
-                            color: AppColors.primaryVioletLight,
+                            color: accent.withValues(alpha: 0.7),
                           ),
                         ),
                       ),
@@ -128,19 +130,20 @@ class ExperienceDetailScreen extends StatelessWidget {
                         left: 12,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
+                            horizontal: 11,
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryViolet,
-                            borderRadius: BorderRadius.circular(8),
+                            color: accent,
+                            borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
                             i18n.translateCategory(experience.categoryName),
-                            style: const TextStyle(
+                            style: AppTypography.sans(
                               color: Colors.white,
                               fontSize: 11,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
                             ),
                           ),
                         ),
@@ -154,8 +157,10 @@ class ExperienceDetailScreen extends StatelessWidget {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.72),
-                            borderRadius: BorderRadius.circular(20),
+                            color: AppColors.darkBackground.withValues(
+                              alpha: 0.78,
+                            ),
+                            borderRadius: BorderRadius.circular(999),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -165,15 +170,15 @@ class ExperienceDetailScreen extends StatelessWidget {
                                     ? Icons.laptop_mac_outlined
                                     : Icons.location_city_outlined,
                                 size: 13,
-                                color: Colors.white,
+                                color: AppColors.darkTextPrimary,
                               ),
                               const SizedBox(width: 5),
                               Text(
                                 _getModalityLabel(experience.modality),
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: AppTypography.sans(
+                                  color: AppColors.darkTextPrimary,
                                   fontSize: 11,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
@@ -184,17 +189,15 @@ class ExperienceDetailScreen extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
                 Text(
                   experience.title,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.lightTextPrimary,
-                    height: 1.25,
+                  style: AppTypography.editorial(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary(isDark),
+                    height: 1.2,
                   ),
                 ),
 
@@ -208,19 +211,17 @@ class ExperienceDetailScreen extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        const Icon(
+                        Icon(
                           Icons.location_on_outlined,
                           size: 16,
-                          color: AppColors.primaryVioletLight,
+                          color: accent,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '${experience.zone ?? ''} • ${experience.venueName ?? ''}',
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             fontSize: 12,
-                            color: isDark
-                                ? AppColors.darkTextSecondary
-                                : AppColors.lightTextSecondary,
+                            color: AppColors.textSecondary(isDark),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -229,19 +230,17 @@ class ExperienceDetailScreen extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        const Icon(
+                        Icon(
                           Icons.calendar_today_outlined,
                           size: 15,
-                          color: AppColors.primaryVioletLight,
+                          color: accent,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           _formatFullDate(experience.eventDate),
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             fontSize: 12,
-                            color: isDark
-                                ? AppColors.darkTextSecondary
-                                : AppColors.lightTextSecondary,
+                            color: AppColors.textSecondary(isDark),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -250,19 +249,17 @@ class ExperienceDetailScreen extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        const Icon(
+                        Icon(
                           Icons.schedule_outlined,
                           size: 16,
-                          color: AppColors.primaryVioletLight,
+                          color: accent,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '${experience.durationMinutes} min',
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             fontSize: 12,
-                            color: isDark
-                                ? AppColors.darkTextSecondary
-                                : AppColors.lightTextSecondary,
+                            color: AppColors.textSecondary(isDark),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -271,11 +268,11 @@ class ExperienceDetailScreen extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
                 // Tarjeta de estado de Quórum
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
                     color: quorumBg,
                     borderRadius: BorderRadius.circular(16),
@@ -302,8 +299,8 @@ class ExperienceDetailScreen extends StatelessWidget {
                                 confirmed
                                     ? i18n.tr('status_confirmed')
                                     : '${i18n.tr('status_pending_slots')} ${experience.slotsRemainingForQuorum}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
+                                style: AppTypography.sans(
+                                  fontWeight: FontWeight.w700,
                                   fontSize: 13,
                                   color: quorumText,
                                 ),
@@ -312,12 +309,10 @@ class ExperienceDetailScreen extends StatelessWidget {
                           ),
                           Text(
                             '${experience.reservedSlots} / ${experience.maxCapacity} ${i18n.tr('slots')}',
-                            style: TextStyle(
+                            style: AppTypography.sans(
                               fontWeight: FontWeight.w800,
                               fontSize: 12.5,
-                              color: isDark
-                                  ? AppColors.darkTextPrimary
-                                  : AppColors.lightTextPrimary,
+                              color: AppColors.textPrimary(isDark),
                             ),
                           ),
                         ],
@@ -330,7 +325,9 @@ class ExperienceDetailScreen extends StatelessWidget {
                           minHeight: 7,
                           backgroundColor: isDark
                               ? Colors.white.withValues(alpha: 0.1)
-                              : Colors.black.withValues(alpha: 0.08),
+                              : AppColors.lightTextPrimary.withValues(
+                                  alpha: 0.08,
+                                ),
                           valueColor: AlwaysStoppedAnimation<Color>(
                             confirmed
                                 ? AppColors.emeraldSuccess
@@ -343,7 +340,11 @@ class ExperienceDetailScreen extends StatelessWidget {
                         confirmed
                             ? i18n.tr('quorum_confirmed_desc')
                             : i18n.tr('quorum_pending_desc'),
-                        style: TextStyle(fontSize: 11.5, color: quorumText),
+                        style: AppTypography.sans(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          color: quorumText,
+                        ),
                       ),
                     ],
                   ),
@@ -351,53 +352,68 @@ class ExperienceDetailScreen extends StatelessWidget {
 
                 const SizedBox(height: 16),
 
-                OutlinedButton.icon(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute<void>(
-                    builder: (_) => MatchingScreen(experienceId: experience.id, i18n: i18n))),
-                  icon: const Icon(Icons.groups_outlined),
-                  label: Text(i18n.tr('btn_matching_search')),
-                ),
-                Text(
-                  i18n.tr('about_event'),
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.lightTextPrimary,
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) => MatchingScreen(
+                          experienceId: experience.id,
+                          i18n: i18n,
+                        ),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: accent,
+                      backgroundColor: AppColors.accentSoft(isDark),
+                      side: BorderSide(color: accent.withValues(alpha: 0.45)),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.groups_outlined, size: 18),
+                    label: Text(i18n.tr('btn_matching_search')),
                   ),
                 ),
-                const SizedBox(height: 6),
+
+                const SizedBox(height: 20),
+
+                Text(
+                  i18n.tr('about_event'),
+                  style: AppTypography.editorial(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary(isDark),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Text(
                   experience.description,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary,
-                    height: 1.45,
+                  style: AppTypography.sans(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary(isDark),
+                    height: 1.55,
                   ),
                 ),
 
                 if (experience.address != null &&
                     experience.address!.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: 18),
+                  Divider(color: AppColors.border(isDark)),
                   const SizedBox(height: 14),
                   Row(
                     children: <Widget>[
-                      const Icon(
-                        Icons.map_outlined,
-                        size: 16,
-                        color: AppColors.primaryVioletLight,
-                      ),
+                      Icon(Icons.map_outlined, size: 16, color: accent),
                       const SizedBox(width: 6),
                       Text(
                         i18n.tr('exact_address'),
-                        style: TextStyle(
+                        style: AppTypography.sans(
                           fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? AppColors.darkTextPrimary
-                              : AppColors.lightTextPrimary,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary(isDark),
                         ),
                       ),
                     ],
@@ -405,11 +421,10 @@ class ExperienceDetailScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     experience.address!,
-                    style: TextStyle(
+                    style: AppTypography.sans(
                       fontSize: 12.5,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary(isDark),
                     ),
                   ),
                 ],
@@ -419,17 +434,13 @@ class ExperienceDetailScreen extends StatelessWidget {
             ),
           ),
 
-          // Barra inferior informativa de precio (Sprint 1: Detalle y exploración)
+          // Barra inferior informativa de precio y reserva
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurfaceElevated
-                  : AppColors.lightSurface,
+              color: AppColors.surfaceSoft(isDark),
               border: Border(
-                top: BorderSide(
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                ),
+                top: BorderSide(color: AppColors.border(isDark)),
               ),
             ),
             child: Row(
@@ -441,20 +452,18 @@ class ExperienceDetailScreen extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       i18n.tr('price_per_person'),
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         fontSize: 11,
-                        color: isDark
-                            ? AppColors.darkTextSecondary
-                            : AppColors.lightTextSecondary,
+                        color: AppColors.textSecondary(isDark),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
                       'Bs. ${experience.price.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primaryVioletLight,
+                      style: AppTypography.editorial(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: accent,
                       ),
                     ),
                   ],
@@ -471,22 +480,23 @@ class ExperienceDetailScreen extends StatelessWidget {
                     ),
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primaryViolet,
+                    backgroundColor: accent,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
-                      vertical: 13,
+                      vertical: 14,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   icon: const Icon(Icons.check_circle_outline, size: 18),
                   label: Text(
                     i18n.tr('btn_book_tickets'),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
+                    style: AppTypography.sans(
+                      fontWeight: FontWeight.w700,
                       fontSize: 14,
+                      color: Colors.white,
                     ),
                   ),
                 ),

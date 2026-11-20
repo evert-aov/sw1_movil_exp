@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../models/booking_model.dart';
 import '../models/ticket_model.dart';
 import '../services/booking_service.dart';
@@ -54,19 +55,24 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
       context: context,
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final accent = AppColors.accent(isDark);
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Row(
             children: [
               Icon(
                 ticket.isUsed ? Icons.check_circle_outline : Icons.qr_code_2_rounded,
-                color: ticket.isUsed ? AppColors.roseDanger : AppColors.primaryViolet,
+                color: ticket.isUsed ? AppColors.dangerText(isDark) : accent,
                 size: 24,
               ),
               const SizedBox(width: 10),
               Text(
                 ticket.isUsed ? 'Entrada utilizada' : 'Entrada digital',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: AppTypography.editorial(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary(isDark),
+                ),
               ),
             ],
           ),
@@ -79,24 +85,25 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: AppColors.lightBorder),
                   ),
                   child: TicketQr(ticket: ticket),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   i18n.tr('ticket_code_label'),
-                  style: TextStyle(
+                  style: AppTypography.sans(
                     fontSize: 12,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    color: AppColors.textSecondary(isDark),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.darkSurfaceElevated : AppColors.lightSurfaceElevated,
+                    color: AppColors.surfaceSoft(isDark),
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.border(isDark)),
                   ),
                   child: SelectableText(
                     ticket.ticketCode,
@@ -113,13 +120,13 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.roseDanger.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.dangerBg(isDark),
+                      borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       i18n.tr('ticket_used_note'),
-                      style: const TextStyle(
-                        color: AppColors.roseDanger,
+                      style: AppTypography.sans(
+                        color: AppColors.dangerText(isDark),
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -132,6 +139,10 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
           actions: [
             FilledButton.tonal(
               onPressed: () => Navigator.pop(ctx),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.accentSoft(isDark),
+                foregroundColor: accent,
+              ),
               child: Text(i18n.tr('btn_close')),
             ),
           ],
@@ -214,30 +225,30 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
         break;
       case 'EXPIRED':
         label = 'EXPIRADO';
-        color = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-        bg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9);
+        color = AppColors.textSecondary(isDark);
+        bg = AppColors.surfaceSoft(isDark);
         break;
       case 'REFUNDED':
         label = 'REEMBOLSADO';
-        color = const Color(0xFF3B82F6);
-        bg = isDark ? const Color(0xFF0F223A) : const Color(0xFFEFF6FF);
+        color = AppColors.infoBlue;
+        bg = isDark ? AppColors.infoBgDark : AppColors.infoBgLight;
         break;
       case 'PUBLISHED':
         label = 'PUBLICADO';
-        color = const Color(0xFF3B82F6);
-        bg = isDark ? const Color(0xFF0F223A) : const Color(0xFFEFF6FF);
+        color = AppColors.infoBlue;
+        bg = isDark ? AppColors.infoBgDark : AppColors.infoBgLight;
         break;
       default:
         label = status.toUpperCase();
-        color = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-        bg = isDark ? AppColors.darkSurfaceElevated : AppColors.lightSurfaceElevated;
+        color = AppColors.textSecondary(isDark);
+        bg = AppColors.surfaceSoft(isDark);
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Row(
@@ -254,10 +265,10 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
           const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(
+            style: AppTypography.sans(
               color: color,
               fontSize: 11,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
             ),
           ),
@@ -269,44 +280,52 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryText = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final secondaryText = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final primaryText = AppColors.textPrimary(isDark);
+    final secondaryText = AppColors.textSecondary(isDark);
+    final cardBg = AppColors.card(isDark);
+    final borderColor = AppColors.border(isDark);
+    final accent = AppColors.accent(isDark);
 
     return RefreshIndicator(
       onRefresh: _load,
-      color: AppColors.primaryViolet,
+      color: accent,
       child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         children: [
-          // Encabezado de página
+          // Encabezado editorial de página
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    i18n.tr('tickets_title'),
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: primaryText,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      i18n.tr('tickets_title'),
+                      style: AppTypography.editorial(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        color: primaryText,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    i18n.tr('tickets_subtitle'),
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      color: secondaryText,
+                    const SizedBox(height: 2),
+                    Text(
+                      i18n.tr('tickets_subtitle'),
+                      style: AppTypography.sans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w400,
+                        color: secondaryText,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               IconButton.filledTonal(
                 onPressed: _busy ? null : _load,
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.surfaceSoft(isDark),
+                  foregroundColor: accent,
+                ),
                 icon: const Icon(Icons.refresh_rounded, size: 20),
                 tooltip: i18n.tr('btn_refresh'),
               ),
@@ -315,10 +334,10 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
 
           if (_busy) ...[
             const SizedBox(height: 12),
-            const LinearProgressIndicator(
+            LinearProgressIndicator(
               minHeight: 3,
               backgroundColor: Colors.transparent,
-              color: AppColors.primaryViolet,
+              color: accent,
             ),
           ],
 
@@ -327,7 +346,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.roseDanger.withValues(alpha: 0.1),
+                color: AppColors.dangerBg(isDark),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: AppColors.roseDanger.withValues(alpha: 0.35),
@@ -335,15 +354,19 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline_rounded, color: AppColors.roseDanger, size: 20),
+                  Icon(
+                    Icons.error_outline_rounded,
+                    color: AppColors.dangerText(isDark),
+                    size: 20,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       _error!,
-                      style: const TextStyle(
-                        color: AppColors.roseDanger,
+                      style: AppTypography.sans(
+                        color: AppColors.dangerText(isDark),
                         fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -352,30 +375,36 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
             ),
           ],
 
-          // Estado vacío
+          // Estado vacío editorial
           if (!_busy && _error == null && _bookings.isEmpty) ...[
-            const SizedBox(height: 60),
-            Center(
+            const SizedBox(height: 48),
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: borderColor),
+              ),
               child: Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryViolet.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
+                      color: AppColors.accentSoft(isDark),
+                      borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.confirmation_number_outlined,
-                      size: 48,
-                      color: AppColors.primaryVioletLight,
+                      size: 40,
+                      color: accent,
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     i18n.tr('tickets_empty_title'),
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
+                    style: AppTypography.editorial(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w600,
                       color: primaryText,
                     ),
                   ),
@@ -383,8 +412,9 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                   Text(
                     i18n.tr('tickets_empty_subtitle'),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: AppTypography.sans(
                       fontSize: 13,
+                      fontWeight: FontWeight.w400,
                       color: secondaryText,
                     ),
                   ),
@@ -394,7 +424,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
           ],
 
           // Lista de reservas
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           for (final booking in _bookings) ...[
             Container(
               margin: const EdgeInsets.only(bottom: 16),
@@ -402,15 +432,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                 color: cardBg,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: borderColor),
-                boxShadow: isDark
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                boxShadow: AppColors.cardShadow(isDark),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,12 +449,12 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryViolet.withValues(alpha: 0.12),
+                                color: AppColors.accentSoft(isDark),
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.confirmation_number_rounded,
-                                color: AppColors.primaryViolet,
+                                color: accent,
                                 size: 22,
                               ),
                             ),
@@ -443,9 +465,9 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                                 children: [
                                   Text(
                                     booking.title,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                                    style: AppTypography.editorial(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
                                       color: primaryText,
                                     ),
                                   ),
@@ -460,7 +482,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                                       const SizedBox(width: 4),
                                       Text(
                                         _formatDate(booking.eventDate),
-                                        style: TextStyle(
+                                        style: AppTypography.sans(
                                           fontSize: 12,
                                           color: secondaryText,
                                         ),
@@ -488,7 +510,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                                   children: [
                                     Text(
                                       'Evento: ',
-                                      style: TextStyle(fontSize: 11, color: secondaryText),
+                                      style: AppTypography.sans(fontSize: 11, color: secondaryText),
                                     ),
                                     _buildStatusBadge(booking.experienceStatus!, isDark),
                                   ],
@@ -499,7 +521,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                                   children: [
                                     Text(
                                       'Devolución: ',
-                                      style: TextStyle(fontSize: 11, color: secondaryText),
+                                      style: AppTypography.sans(fontSize: 11, color: secondaryText),
                                     ),
                                     _buildStatusBadge(booking.refundStatus!, isDark),
                                   ],
@@ -508,7 +530,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                           ),
                         ],
 
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
 
                         // Fila de importe y cantidad
                         Row(
@@ -516,17 +538,17 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                           children: [
                             Text(
                               '${booking.quantity} ${booking.quantity == 1 ? 'entrada' : 'entradas'}',
-                              style: TextStyle(
+                              style: AppTypography.sans(
                                 fontSize: 13,
                                 color: secondaryText,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             Text(
                               '${booking.currency} ${booking.total.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
+                              style: AppTypography.editorial(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
                                 color: primaryText,
                               ),
                             ),
@@ -540,10 +562,8 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurfaceElevated
-                          : AppColors.lightSurfaceElevated,
-                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+                      color: AppColors.surfaceSoft(isDark),
+                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(19)),
                       border: Border(top: BorderSide(color: borderColor)),
                     ),
                     child: Column(
@@ -563,6 +583,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                                 icon: const Icon(Icons.receipt_outlined, size: 16),
                                 label: const Text('Ver detalle / pago'),
                                 style: OutlinedButton.styleFrom(
+                                  backgroundColor: cardBg,
                                   padding: const EdgeInsets.symmetric(vertical: 10),
                                   side: BorderSide(color: borderColor),
                                   shape: RoundedRectangleBorder(
@@ -576,7 +597,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                               TextButton(
                                 onPressed: _busy ? null : () => _refund(booking),
                                 style: TextButton.styleFrom(
-                                  foregroundColor: AppColors.roseDanger,
+                                  foregroundColor: AppColors.dangerText(isDark),
                                   padding: const EdgeInsets.symmetric(horizontal: 8),
                                 ),
                                 child: const Text(
@@ -598,14 +619,20 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                               for (var i = 0; i < booking.tickets.length; i++)
                                 FilledButton.tonalIcon(
                                   onPressed: () => _showTicket(booking.tickets[i]),
-                                  icon: const Icon(Icons.qr_code_rounded, size: 16),
+                                  icon: Icon(Icons.qr_code_rounded, size: 16, color: accent),
                                   label: Text(
                                     booking.tickets.length > 1
                                         ? 'Entrada ${i + 1} QR'
                                         : 'Mostrar Entrada QR',
-                                    style: const TextStyle(fontSize: 12),
+                                    style: AppTypography.sans(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: accent,
+                                    ),
                                   ),
                                   style: FilledButton.styleFrom(
+                                    backgroundColor: AppColors.accentSoft(isDark),
+                                    foregroundColor: accent,
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10),

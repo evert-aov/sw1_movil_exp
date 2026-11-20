@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../experience/services/experience_service.dart';
 import '../models/booking_model.dart';
 import '../models/booking_request_model.dart';
@@ -201,30 +202,30 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         break;
       case 'EXPIRED':
         label = 'EXPIRADO';
-        color = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-        bg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9);
+        color = AppColors.textSecondary(isDark);
+        bg = AppColors.surfaceSoft(isDark);
         break;
       case 'REFUNDED':
         label = 'REEMBOLSADO';
-        color = const Color(0xFF3B82F6);
-        bg = isDark ? const Color(0xFF0F223A) : const Color(0xFFEFF6FF);
+        color = AppColors.infoBlue;
+        bg = isDark ? AppColors.infoBgDark : AppColors.infoBgLight;
         break;
       case 'PUBLISHED':
         label = 'PUBLICADO';
-        color = const Color(0xFF3B82F6);
-        bg = isDark ? const Color(0xFF0F223A) : const Color(0xFFEFF6FF);
+        color = AppColors.infoBlue;
+        bg = isDark ? AppColors.infoBgDark : AppColors.infoBgLight;
         break;
       default:
         label = status.toUpperCase();
-        color = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-        bg = isDark ? AppColors.darkSurfaceElevated : AppColors.lightSurfaceElevated;
+        color = AppColors.textSecondary(isDark);
+        bg = AppColors.surfaceSoft(isDark);
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Row(
@@ -241,10 +242,10 @@ class _CheckoutScreenState extends State<CheckoutScreen>
           const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(
+            style: AppTypography.sans(
               color: color,
               fontSize: 11,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
             ),
           ),
@@ -259,9 +260,9 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: AppTypography.sans(
             fontSize: 13,
-            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+            color: AppColors.textSecondary(isDark),
           ),
         ),
         trailing,
@@ -273,30 +274,35 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   Widget build(BuildContext context) {
     final booking = _booking;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryText = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final secondaryText = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final primaryText = AppColors.textPrimary(isDark);
+    final secondaryText = AppColors.textSecondary(isDark);
+    final cardBg = AppColors.card(isDark);
+    final borderColor = AppColors.border(isDark);
+    final accent = AppColors.accent(isDark);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Reserva y pago',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: AppTypography.editorial(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: primaryText,
+          ),
         ),
         elevation: 0,
       ),
       body: Column(
         children: [
           if (_busy)
-            const LinearProgressIndicator(
+            LinearProgressIndicator(
               minHeight: 3,
               backgroundColor: Colors.transparent,
-              color: AppColors.primaryViolet,
+              color: accent,
             ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               children: [
                 // Banner de error si ocurre alguno
                 if (_error != null)
@@ -304,7 +310,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                     margin: const EdgeInsets.only(bottom: 16),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppColors.roseDanger.withValues(alpha: 0.1),
+                      color: AppColors.dangerBg(isDark),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: AppColors.roseDanger.withValues(alpha: 0.35),
@@ -313,25 +319,25 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.error_outline_rounded,
-                          color: AppColors.roseDanger,
+                          color: AppColors.dangerText(isDark),
                           size: 20,
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             _error!,
-                            style: const TextStyle(
-                              color: AppColors.roseDanger,
+                            style: AppTypography.sans(
+                              color: AppColors.dangerText(isDark),
                               fontSize: 13,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close_rounded, size: 18),
-                          color: AppColors.roseDanger,
+                          color: AppColors.dangerText(isDark),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           onPressed: () => setState(() => _error = null),
@@ -340,24 +346,15 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                     ),
                   ),
 
-                // FASE 1: Selección de cantidad de entradas (cuando aún no se creó la reserva)
+                // FASE 1: Selección de cantidad de entradas
                 if (booking == null && widget.experienceId != null) ...[
-                  // Tarjeta principal de selección
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: cardBg,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: borderColor),
-                      boxShadow: isDark
-                          ? null
-                          : [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                      boxShadow: AppColors.cardShadow(isDark),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,13 +365,13 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryViolet.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(16),
+                                color: AppColors.accentSoft(isDark),
+                                borderRadius: BorderRadius.circular(14),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.confirmation_number_rounded,
-                                color: AppColors.primaryViolet,
-                                size: 26,
+                                color: accent,
+                                size: 24,
                               ),
                             ),
                             const SizedBox(width: 14),
@@ -384,17 +381,18 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                 children: [
                                   Text(
                                     _experienceTitle ?? 'Selección de entradas',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                                    style: AppTypography.editorial(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w600,
                                       color: primaryText,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     'Elige la cantidad de cupos para tu orden.',
-                                    style: TextStyle(
+                                    style: AppTypography.sans(
                                       fontSize: 12.5,
+                                      fontWeight: FontWeight.w400,
                                       color: secondaryText,
                                     ),
                                   ),
@@ -406,20 +404,13 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                         Divider(color: borderColor, height: 32),
                         Text(
                           'CANTIDAD DE ENTRADAS',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                            color: secondaryText,
-                          ),
+                          style: AppTypography.eyebrow(isDark),
                         ),
                         const SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkSurfaceElevated
-                                : AppColors.lightSurfaceElevated,
+                            color: AppColors.surfaceSoft(isDark),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: borderColor),
                           ),
@@ -432,7 +423,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                     : () => setState(() => _quantity--),
                                 icon: const Icon(Icons.remove_rounded),
                                 style: IconButton.styleFrom(
-                                  backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+                                  backgroundColor: cardBg,
                                   foregroundColor: primaryText,
                                 ),
                               ),
@@ -440,15 +431,15 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                 children: [
                                   Text(
                                     '$_quantity',
-                                    style: TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.w900,
+                                    style: AppTypography.editorial(
+                                      fontSize: 34,
+                                      fontWeight: FontWeight.w700,
                                       color: primaryText,
                                     ),
                                   ),
                                   Text(
                                     _quantity == 1 ? 'entrada' : 'entradas',
-                                    style: TextStyle(
+                                    style: AppTypography.sans(
                                       fontSize: 12,
                                       color: secondaryText,
                                       fontWeight: FontWeight.w500,
@@ -462,7 +453,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                     : () => setState(() => _quantity++),
                                 icon: const Icon(Icons.add_rounded),
                                 style: IconButton.styleFrom(
-                                  backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+                                  backgroundColor: cardBg,
                                   foregroundColor: primaryText,
                                 ),
                               ),
@@ -472,12 +463,12 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                         if (_unitPrice != null) ...[
                           const SizedBox(height: 16),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryViolet.withValues(alpha: 0.06),
+                              color: AppColors.accentSoft(isDark),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: AppColors.primaryViolet.withValues(alpha: 0.2),
+                                color: accent.withValues(alpha: 0.3),
                               ),
                             ),
                             child: Row(
@@ -488,28 +479,28 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                   children: [
                                     Text(
                                       'Total estimado',
-                                      style: TextStyle(
+                                      style: AppTypography.sans(
                                         fontSize: 12,
                                         color: secondaryText,
-                                        fontWeight: FontWeight.w500,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                     Text(
                                       'Bs. ${(_unitPrice! * _quantity).toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w900,
-                                        color: AppColors.primaryVioletLight,
+                                      style: AppTypography.editorial(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w700,
+                                        color: accent,
                                       ),
                                     ),
                                   ],
                                 ),
                                 Text(
                                   'Bs. ${_unitPrice!.toStringAsFixed(2)} c/u',
-                                  style: TextStyle(
+                                  style: AppTypography.sans(
                                     fontSize: 12,
                                     color: secondaryText,
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
@@ -524,17 +515,18 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                             icon: const Icon(Icons.lock_clock_outlined, size: 20),
                             label: Text(
                               'Reservar $_quantity ${_quantity == 1 ? 'entrada' : 'entradas'}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                              style: AppTypography.sans(
+                                fontWeight: FontWeight.w700,
                                 fontSize: 15,
+                                color: Colors.white,
                               ),
                             ),
                             style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.primaryViolet,
+                              backgroundColor: accent,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                           ),
@@ -547,17 +539,17 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurfaceElevated : AppColors.lightSurfaceElevated,
+                      color: AppColors.surfaceSoft(isDark),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: borderColor),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.shield_outlined,
                           size: 20,
-                          color: AppColors.primaryVioletLight,
+                          color: accent,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -566,19 +558,20 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                             children: [
                               Text(
                                 'Retención temporal de cupos',
-                                style: TextStyle(
+                                style: AppTypography.sans(
                                   fontSize: 13,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w700,
                                   color: primaryText,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 'Al reservar, tus cupos quedan retenidos exclusivamente para ti durante 15 minutos mientras completas el pago seguro en Stripe.',
-                                style: TextStyle(
+                                style: AppTypography.sans(
                                   fontSize: 12,
+                                  fontWeight: FontWeight.w400,
                                   color: secondaryText,
-                                  height: 1.4,
+                                  height: 1.45,
                                 ),
                               ),
                             ],
@@ -589,24 +582,15 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                   ),
                 ],
 
-                // FASE 2: Reserva activa (detalles, estado, alerta y pago)
+                // FASE 2: Reserva activa
                 if (booking != null) ...[
-                  // 1. Tarjeta con información del evento y reserva
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: cardBg,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: borderColor),
-                      boxShadow: isDark
-                          ? null
-                          : [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                      boxShadow: AppColors.cardShadow(isDark),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -617,13 +601,13 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryViolet.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(16),
+                                color: AppColors.accentSoft(isDark),
+                                borderRadius: BorderRadius.circular(14),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.confirmation_number_rounded,
-                                color: AppColors.primaryViolet,
-                                size: 26,
+                                color: accent,
+                                size: 24,
                               ),
                             ),
                             const SizedBox(width: 14),
@@ -633,9 +617,9 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                 children: [
                                   Text(
                                     booking.title,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                                    style: AppTypography.editorial(
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.w600,
                                       color: primaryText,
                                     ),
                                   ),
@@ -651,7 +635,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                       Expanded(
                                         child: Text(
                                           _formatDateTime(booking.eventDate),
-                                          style: TextStyle(
+                                          style: AppTypography.sans(
                                             fontSize: 12.5,
                                             color: secondaryText,
                                           ),
@@ -885,32 +869,24 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                       color: cardBg,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: borderColor),
-                      boxShadow: isDark
-                          ? null
-                          : [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                      boxShadow: AppColors.cardShadow(isDark),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.receipt_long_outlined,
                               size: 20,
-                              color: AppColors.primaryViolet,
+                              color: accent,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               'Resumen de la orden',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                              style: AppTypography.editorial(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
                                 color: primaryText,
                               ),
                             ),
@@ -919,7 +895,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                         Divider(color: borderColor, height: 24),
                         Text(
                           'Total a pagar',
-                          style: TextStyle(fontSize: 12, color: secondaryText),
+                          style: AppTypography.sans(fontSize: 12, color: secondaryText),
                         ),
                         const SizedBox(height: 4),
                         Row(
@@ -928,7 +904,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                           children: [
                             Text(
                               '${booking.currency} ',
-                              style: TextStyle(
+                              style: AppTypography.sans(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: secondaryText,
@@ -936,10 +912,9 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                             ),
                             Text(
                               booking.total.toStringAsFixed(2),
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.5,
+                              style: AppTypography.editorial(
+                                fontSize: 34,
+                                fontWeight: FontWeight.w700,
                                 color: primaryText,
                               ),
                             ),
@@ -948,16 +923,14 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                         const SizedBox(height: 6),
                         Text(
                           'Comisión de plataforma e impuestos incluidos.',
-                          style: TextStyle(fontSize: 11.5, color: secondaryText),
+                          style: AppTypography.sans(fontSize: 11.5, color: secondaryText),
                         ),
                         const SizedBox(height: 16),
                         // Distintivo de seguridad
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkSurfaceElevated
-                                : AppColors.lightSurfaceElevated,
+                            color: AppColors.surfaceSoft(isDark),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: borderColor),
                           ),
@@ -976,17 +949,18 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                   children: [
                                     Text(
                                       'Pago 100% seguro y encriptado',
-                                      style: TextStyle(
+                                      style: AppTypography.sans(
                                         fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                                        fontWeight: FontWeight.w700,
                                         color: primaryText,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       'Procesado a través de Stripe con cifrado SSL bancario.',
-                                      style: TextStyle(
+                                      style: AppTypography.sans(
                                         fontSize: 11,
+                                        fontWeight: FontWeight.w400,
                                         color: secondaryText,
                                       ),
                                     ),
@@ -1003,19 +977,20 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                             child: FilledButton.icon(
                               onPressed: _busy ? null : _pay,
                               icon: const Icon(Icons.credit_card_rounded, size: 20),
-                              label: const Text(
+                              label: Text(
                                 'Pagar con Stripe',
-                                style: TextStyle(
+                                style: AppTypography.sans(
                                   fontSize: 15,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
                                 ),
                               ),
                               style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.primaryViolet,
+                                backgroundColor: accent,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                             ),
@@ -1031,7 +1006,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               side: BorderSide(color: borderColor),
                             ),
@@ -1044,16 +1019,16 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                               onPressed: _busy
                                   ? null
                                   : () => _confirmAndCancel(booking),
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.close_rounded,
                                 size: 16,
-                                color: AppColors.roseDanger,
+                                color: AppColors.dangerText(isDark),
                               ),
-                              label: const Text(
+                              label: Text(
                                 'Cancelar reserva',
-                                style: TextStyle(
-                                  color: AppColors.roseDanger,
-                                  fontWeight: FontWeight.w600,
+                                style: AppTypography.sans(
+                                  color: AppColors.dangerText(isDark),
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),

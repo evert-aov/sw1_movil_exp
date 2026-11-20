@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/network/http_client.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../live/live_monitor_strings.dart';
 import '../../live/screens/live_monitor_screen.dart';
 import '../models/auth_credentials_model.dart';
@@ -99,27 +100,15 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         title: Row(
           children: <Widget>[
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppColors.primaryViolet,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.auto_awesome_outlined,
-                color: Colors.white,
-                size: 17,
-              ),
-            ),
-            const SizedBox(width: 10),
+            const EditorialBrandMark(size: 34),
+            const SizedBox(width: 11),
             Text(
               i18n.tr('app_title'),
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.2,
-                fontSize: 16,
+              style: AppTypography.editorial(
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.4,
+                fontSize: 18,
+                color: AppColors.textPrimary(isDark),
               ),
             ),
           ],
@@ -129,26 +118,32 @@ class _LoginScreenState extends State<LoginScreen> {
           IconButton(
             key: const Key('live-monitor-entry'),
             tooltip: LiveMonitorStrings(i18n.languageCode).tr('entry'),
-            icon: const Icon(Icons.monitor_heart_outlined, size: 20),
+            icon: Icon(
+              Icons.monitor_heart_outlined,
+              size: 20,
+              color: AppColors.textPrimary(isDark),
+            ),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (_) => LiveMonitorScreen(languageCode: i18n.languageCode),
+                builder: (_) =>
+                    LiveMonitorScreen(languageCode: i18n.languageCode),
               ),
             ),
           ),
           TextButton.icon(
             onPressed: widget.onToggleLanguage,
-            icon: const Icon(
+            icon: Icon(
               Icons.translate_rounded,
               size: 16,
-              color: AppColors.primaryVioletLight,
+              color: AppColors.accent(isDark),
             ),
             label: Text(
               i18n.languageCode.toUpperCase(),
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
+              style: AppTypography.sans(
+                fontWeight: FontWeight.w700,
                 fontSize: 12,
-                color: AppColors.primaryVioletLight,
+                letterSpacing: 0.8,
+                color: AppColors.accent(isDark),
               ),
             ),
           ),
@@ -158,6 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
             icon: Icon(
               isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
               size: 20,
+              color: AppColors.textPrimary(isDark),
             ),
           ),
           const SizedBox(width: 8),
@@ -172,11 +168,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: <Widget>[
                   Expanded(
                     flex: 11,
-                    child: _buildHeroBrandingPanel(context),
+                    child: Container(
+                      height: double.infinity,
+                      color: AppColors.surfaceSoft(isDark),
+                      child: _buildHeroBrandingPanel(context),
+                    ),
                   ),
                   Container(
                     width: 1,
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    color: AppColors.border(isDark),
                   ),
                   Expanded(
                     flex: 10,
@@ -209,31 +209,23 @@ class _LoginScreenState extends State<LoginScreen> {
     final AppLocalizations i18n = widget.i18n;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 36),
+      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Text(
-            i18n.tr('hero_tagline'),
-            style: const TextStyle(
-              color: AppColors.primaryVioletLight,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.8,
-            ),
+            i18n.tr('hero_tagline').toUpperCase(),
+            style: AppTypography.eyebrow(isDark),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
           Text(
             i18n.tr('hero_title'),
-            style: TextStyle(
+            style: AppTypography.editorial(
               fontSize: 42,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w500,
               height: 1.12,
-              letterSpacing: -1.0,
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.lightTextPrimary,
+              color: AppColors.textPrimary(isDark),
             ),
           ),
           const SizedBox(height: 18),
@@ -241,12 +233,11 @@ class _LoginScreenState extends State<LoginScreen> {
             constraints: const BoxConstraints(maxWidth: 500),
             child: Text(
               i18n.tr('hero_description'),
-              style: TextStyle(
+              style: AppTypography.sans(
                 fontSize: 15,
-                height: 1.55,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+                height: 1.6,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textSecondary(isDark),
               ),
             ),
           ),
@@ -297,11 +288,10 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        color: AppColors.card(isDark),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
+        border: Border.all(color: AppColors.border(isDark)),
+        boxShadow: AppColors.cardShadow(isDark),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,32 +299,32 @@ class _LoginScreenState extends State<LoginScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primaryViolet.withValues(alpha: 0.15),
+              color: AppColors.accentSoft(isDark),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
               size: 18,
-              color: AppColors.primaryVioletLight,
+              color: AppColors.accent(isDark),
             ),
           ),
           const SizedBox(height: 12),
           Text(
             title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
+            style: AppTypography.sans(
+              fontWeight: FontWeight.w700,
               fontSize: 13,
+              color: AppColors.textPrimary(isDark),
             ),
           ),
           const SizedBox(height: 6),
           Text(
             description,
-            style: TextStyle(
+            style: AppTypography.sans(
               fontSize: 11.5,
-              height: 1.35,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+              height: 1.4,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textSecondary(isDark),
             ),
           ),
         ],
@@ -346,58 +336,49 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildAuthFormPanel(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final AppLocalizations i18n = widget.i18n;
+    final Color accent = AppColors.accent(isDark);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            i18n.tr('welcome_badge'),
-            style: const TextStyle(
-              color: AppColors.primaryVioletLight,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.4,
-            ),
+            i18n.tr('welcome_badge').toUpperCase(),
+            style: AppTypography.eyebrow(isDark),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             _showRegisterTab
                 ? i18n.tr('register_header')
                 : i18n.tr('login_header'),
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.lightTextPrimary,
-              letterSpacing: -0.5,
+            style: AppTypography.editorial(
+              fontSize: 30,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary(isDark),
+              height: 1.15,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             i18n.tr('auth_subtitle'),
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
-              height: 1.4,
+            style: AppTypography.sans(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textSecondary(isDark),
+              height: 1.5,
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
           // Selector segmentado: Iniciar sesión / Crear cuenta
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              color: AppColors.surfaceSoft(isDark),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-              ),
+              border: Border.all(color: AppColors.border(isDark)),
             ),
             child: Row(
               children: <Widget>[
@@ -408,24 +389,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       _errorMessage = null;
                     }),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
                       decoration: BoxDecoration(
-                        color: !_showRegisterTab
-                            ? AppColors.primaryViolet
-                            : Colors.transparent,
+                        color: !_showRegisterTab ? accent : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         i18n.tr('tab_login'),
-                        style: TextStyle(
+                        style: AppTypography.sans(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
                           color: !_showRegisterTab
                               ? Colors.white
-                              : (isDark
-                                  ? AppColors.darkTextSecondary
-                                  : AppColors.lightTextSecondary),
+                              : AppColors.textSecondary(isDark),
                         ),
                       ),
                     ),
@@ -438,24 +415,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       _errorMessage = null;
                     }),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
                       decoration: BoxDecoration(
-                        color: _showRegisterTab
-                            ? AppColors.primaryViolet
-                            : Colors.transparent,
+                        color: _showRegisterTab ? accent : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         i18n.tr('tab_register'),
-                        style: TextStyle(
+                        style: AppTypography.sans(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
                           color: _showRegisterTab
                               ? Colors.white
-                              : (isDark
-                                  ? AppColors.darkTextSecondary
-                                  : AppColors.lightTextSecondary),
+                              : AppColors.textSecondary(isDark),
                         ),
                       ),
                     ),
@@ -465,13 +438,13 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
           if (_errorMessage != null) ...<Widget>[
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.roseDanger.withValues(alpha: 0.12),
+                color: AppColors.dangerBg(isDark),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: AppColors.roseDanger.withValues(alpha: 0.4),
@@ -479,18 +452,18 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: Row(
                 children: <Widget>[
-                  const Icon(
+                  Icon(
                     Icons.error_outline_rounded,
-                    color: AppColors.roseDanger,
+                    color: AppColors.dangerText(isDark),
                     size: 18,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _errorMessage!,
-                      style: const TextStyle(
+                      style: AppTypography.sans(
                         fontSize: 12,
-                        color: AppColors.roseDanger,
+                        color: AppColors.dangerText(isDark),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -512,9 +485,10 @@ class _LoginScreenState extends State<LoginScreen> {
               children: <Widget>[
                 Text(
                   i18n.tr('label_email'),
-                  style: const TextStyle(
+                  style: AppTypography.sans(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary(isDark),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -532,9 +506,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 Text(
                   i18n.tr('label_password'),
-                  style: const TextStyle(
+                  style: AppTypography.sans(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary(isDark),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -558,16 +533,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
                         size: 16,
-                        color: AppColors.primaryVioletLight,
+                        color: accent,
                       ),
                       label: Text(
                         _obscurePassword
                             ? i18n.tr('show_password')
                             : i18n.tr('hide_password'),
-                        style: const TextStyle(
+                        style: AppTypography.sans(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primaryVioletLight,
+                          color: accent,
                         ),
                       ),
                     ),
@@ -579,20 +554,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurface
-                        : AppColors.lightSurface,
+                    color: AppColors.accentSoft(isDark),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: AppColors.primaryVioletLight,
-                      width: 1.4,
+                      color: accent.withValues(alpha: 0.45),
+                      width: 1.2,
                     ),
                   ),
                   child: Row(
                     children: <Widget>[
-                      const Icon(
+                      Icon(
                         Icons.person_outline_rounded,
-                        color: AppColors.primaryVioletLight,
+                        color: accent,
                         size: 20,
                       ),
                       const SizedBox(width: 12),
@@ -602,45 +575,45 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: <Widget>[
                             Text(
                               i18n.tr('attendee_role_title'),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
+                              style: AppTypography.sans(
+                                fontWeight: FontWeight.w700,
                                 fontSize: 13,
+                                color: AppColors.textPrimary(isDark),
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               i18n.tr('attendee_role_desc'),
-                              style: TextStyle(
+                              style: AppTypography.sans(
                                 fontSize: 11.5,
-                                color: isDark
-                                    ? AppColors.darkTextSecondary
-                                    : AppColors.lightTextSecondary,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.textSecondary(isDark),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.check_circle_rounded,
-                        color: AppColors.primaryVioletLight,
+                        color: accent,
                         size: 20,
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 22),
 
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
                     onPressed: _isSubmitting ? null : _onLoginSubmitted,
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primaryViolet,
+                      backgroundColor: accent,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     icon: _isSubmitting
@@ -655,9 +628,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         : const Icon(Icons.arrow_forward_rounded, size: 18),
                     label: Text(
                       i18n.tr('btn_login'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
+                      style: AppTypography.sans(
+                        fontWeight: FontWeight.w700,
                         fontSize: 14,
+                        letterSpacing: 0.4,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -668,11 +643,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(
                     i18n.tr('terms_footer'),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: AppTypography.sans(
                       fontSize: 11,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary(isDark),
                     ),
                   ),
                 ),

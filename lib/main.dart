@@ -4,6 +4,7 @@ import 'core/localization/locale_controller.dart';
 import 'core/services/push_notification_service.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/app_typography.dart';
 import 'core/theme/theme_controller.dart';
 import 'features/auth/models/user_model.dart';
 import 'features/auth/screens/login_screen.dart';
@@ -184,41 +185,28 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       appBar: AppBar(
         title: Row(
           children: <Widget>[
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppColors.primaryViolet,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              alignment: Alignment.center,
-              child: const Icon(
-                Icons.auto_awesome_outlined,
-                color: Colors.white,
-                size: 17,
-              ),
-            ),
-            const SizedBox(width: 10),
+            const EditorialBrandMark(size: 34),
+            const SizedBox(width: 11),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
                     i18n.tr('app_title'),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.2,
-                      fontSize: 15,
+                    style: AppTypography.editorial(
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.4,
+                      fontSize: 17,
+                      color: AppColors.textPrimary(isDark),
+                      height: 1.1,
                     ),
                   ),
                   Text(
                     i18n.tr('app_subtitle'),
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: AppTypography.sans(
                       fontSize: 10.5,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
+                      color: AppColors.textSecondary(isDark),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -230,17 +218,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         actions: <Widget>[
           TextButton.icon(
             onPressed: widget.onToggleLanguage,
-            icon: const Icon(
+            icon: Icon(
               Icons.translate_rounded,
               size: 16,
-              color: AppColors.primaryVioletLight,
+              color: AppColors.accent(isDark),
             ),
             label: Text(
               i18n.languageCode.toUpperCase(),
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
+              style: AppTypography.sans(
+                fontWeight: FontWeight.w700,
                 fontSize: 12,
-                color: AppColors.primaryVioletLight,
+                letterSpacing: 0.8,
+                color: AppColors.accent(isDark),
               ),
             ),
           ),
@@ -250,52 +239,61 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             icon: Icon(
               isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
               size: 20,
+              color: AppColors.textPrimary(isDark),
             ),
           ),
+          const SizedBox(width: 4),
         ],
       ),
       body: screens[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (int index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        destinations: <Widget>[
-          NavigationDestination(
-            icon: const Icon(Icons.explore_outlined),
-            selectedIcon: const Icon(
-              Icons.explore,
-              color: AppColors.primaryVioletLight,
-            ),
-            label: i18n.tr('nav_discover'),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: AppColors.border(isDark), width: 1),
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.person_outline_rounded),
-            selectedIcon: const Icon(
-              Icons.person_rounded,
-              color: AppColors.primaryVioletLight,
+        ),
+        child: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (int index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          destinations: <Widget>[
+            NavigationDestination(
+              icon: const Icon(Icons.explore_outlined),
+              selectedIcon: Icon(
+                Icons.explore,
+                color: AppColors.accent(isDark),
+              ),
+              label: i18n.tr('nav_discover'),
             ),
-            label: i18n.tr('nav_profile'),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.confirmation_number_outlined),
-            selectedIcon: const Icon(
-              Icons.confirmation_number,
-              color: AppColors.primaryVioletLight,
+            NavigationDestination(
+              icon: const Icon(Icons.person_outline_rounded),
+              selectedIcon: Icon(
+                Icons.person_rounded,
+                color: AppColors.accent(isDark),
+              ),
+              label: i18n.tr('nav_profile'),
             ),
-            label: i18n.tr('nav_tickets'),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.notifications_outlined),
-            selectedIcon: const Icon(
-              Icons.notifications,
-              color: AppColors.primaryVioletLight,
+            NavigationDestination(
+              icon: const Icon(Icons.confirmation_number_outlined),
+              selectedIcon: Icon(
+                Icons.confirmation_number,
+                color: AppColors.accent(isDark),
+              ),
+              label: i18n.tr('nav_tickets'),
             ),
-            label: i18n.tr('nav_notifications'),
-          ),
-        ],
+            NavigationDestination(
+              icon: const Icon(Icons.notifications_outlined),
+              selectedIcon: Icon(
+                Icons.notifications,
+                color: AppColors.accent(isDark),
+              ),
+              label: i18n.tr('nav_notifications'),
+            ),
+          ],
+        ),
       ),
     );
   }

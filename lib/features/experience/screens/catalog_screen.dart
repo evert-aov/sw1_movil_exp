@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/network/http_client.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../auth/services/auth_service.dart';
 import '../models/experience_filter_model.dart';
 import '../models/experience_model.dart';
@@ -291,8 +292,13 @@ class _CatalogScreenState extends State<CatalogScreen> {
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryViolet,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                backgroundColor: AppColors.accent(
+                  Theme.of(ctx).brightness == Brightness.dark,
+                ),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: Text(i18n.tr('apply_filters')),
             ),
@@ -338,76 +344,93 @@ class _CatalogScreenState extends State<CatalogScreen> {
     final i18n = widget.i18n;
     showDialog<void>(
       context: context,
-      builder: (BuildContext ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: <Widget>[
-            const Icon(
-              Icons.lightbulb_outline_rounded,
-              color: AppColors.primaryVioletLight,
-              size: 22,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
+      builder: (BuildContext ctx) {
+        final bool isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final Color accent = AppColors.accent(isDark);
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: <Widget>[
+              Icon(
+                Icons.lightbulb_outline_rounded,
+                color: accent,
+                size: 22,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  i18n.tr('quorum_dialog_title'),
+                  style: AppTypography.editorial(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary(isDark),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                i18n.tr('quorum_dialog_intro'),
+                style: AppTypography.sans(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  color: AppColors.textPrimary(isDark),
+                ),
+              ),
+              const SizedBox(height: 10),
+              _buildBulletRow(
+                Icons.groups_outlined,
+                i18n.tr('quorum_dialog_p1'),
+                accent,
+              ),
+              const SizedBox(height: 8),
+              _buildBulletRow(
+                Icons.trending_up_rounded,
+                i18n.tr('quorum_dialog_p2'),
+                accent,
+              ),
+              const SizedBox(height: 8),
+              _buildBulletRow(
+                Icons.verified_user_outlined,
+                i18n.tr('quorum_dialog_p3'),
+                accent,
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
               child: Text(
-                i18n.tr('quorum_dialog_title'),
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
+                i18n.tr('btn_understood'),
+                style: AppTypography.sans(
+                  fontWeight: FontWeight.w700,
+                  color: accent,
                 ),
               ),
             ),
           ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              i18n.tr('quorum_dialog_intro'),
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-            ),
-            const SizedBox(height: 10),
-            _buildBulletRow(Icons.groups_outlined, i18n.tr('quorum_dialog_p1')),
-            const SizedBox(height: 8),
-            _buildBulletRow(
-              Icons.trending_up_rounded,
-              i18n.tr('quorum_dialog_p2'),
-            ),
-            const SizedBox(height: 8),
-            _buildBulletRow(
-              Icons.verified_user_outlined,
-              i18n.tr('quorum_dialog_p3'),
-            ),
-          ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              i18n.tr('btn_understood'),
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: AppColors.primaryVioletLight,
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   /// Construye una fila de texto con icono para el modal explicativo de Quórum.
-  Widget _buildBulletRow(IconData icon, String text) {
+  Widget _buildBulletRow(IconData icon, String text, Color accent) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Icon(icon, size: 16, color: AppColors.primaryVioletLight),
+        Icon(icon, size: 16, color: accent),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontSize: 12.5, height: 1.4),
+            style: const TextStyle(fontSize: 12.5, height: 1.45),
           ),
         ),
       ],
@@ -430,6 +453,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
   Widget build(BuildContext context) {
     final AppLocalizations i18n = widget.i18n;
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color accent = AppColors.accent(isDark);
     final userInterests = _authService.currentUser?.interests ?? <String>[];
     final bool isForYou = _filter.category == 'Para ti';
     final int resultCount = isForYou ? _experiences.length : _service.totalResults;
@@ -441,9 +465,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadCatalog,
-      color: AppColors.primaryViolet,
+      color: accent,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         children: <Widget>[
           // Buscador por palabra clave, categoría o zona
           TextField(
@@ -456,26 +480,38 @@ class _CatalogScreenState extends State<CatalogScreen> {
             },
             decoration: InputDecoration(
               hintText: i18n.tr('search_hint'),
-              prefixIcon: const Icon(
+              prefixIcon: Icon(
                 Icons.search_rounded,
-                color: AppColors.primaryVioletLight,
+                color: accent,
               ),
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
-          TextButton.icon(
-            onPressed: _showAdvancedFilters,
-            icon: const Icon(Icons.tune),
-            label: Text(i18n.tr('advanced_filters')),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: _showAdvancedFilters,
+              icon: Icon(Icons.tune_rounded, size: 17, color: accent),
+              label: Text(
+                i18n.tr('advanced_filters'),
+                style: AppTypography.sans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                  color: accent,
+                ),
+              ),
+            ),
           ),
-          // Banner explicativo de Quórum Mínimo (solo iconos)
+
+          // Banner explicativo de Quórum Mínimo
           InkWell(
             onTap: _showQuorumInfoDialog,
             borderRadius: BorderRadius.circular(14),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.amberBgDark : AppColors.amberBgLight,
                 borderRadius: BorderRadius.circular(14),
@@ -490,15 +526,15 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     size: 18,
                     color: AppColors.amberWarning,
                   ),
-                  const SizedBox(width: 9),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       i18n.tr('quorum_banner_text'),
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         fontSize: 11.5,
                         color: isDark
-                            ? const Color(0xFFFDE68A)
-                            : const Color(0xFF92400E),
+                            ? AppColors.amberTextDark
+                            : AppColors.amberTextLight,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -507,40 +543,48 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     Icons.chevron_right_rounded,
                     size: 18,
                     color: isDark
-                        ? const Color(0xFFFBBF24)
-                        : const Color(0xFFB45309),
+                        ? AppColors.amberTextDark
+                        : AppColors.amberTextLight,
                   ),
                 ],
               ),
             ),
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
-          // Filtros de modalidad con iconos vectoriales
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: <Widget>[
-              _buildModalityChip('ALL', i18n.tr('mod_all'), Icons.apps_rounded),
-              _buildModalityChip(
-                'IN_PERSON',
-                i18n.tr('mod_in_person'),
-                Icons.location_city_outlined,
-              ),
-              _buildModalityChip(
-                'VIRTUAL',
-                i18n.tr('mod_virtual'),
-                Icons.laptop_mac_outlined,
-              ),
-            ],
+          // Selector de modalidad estilo pill editorial (como la web)
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceSoft(isDark),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border(isDark)),
+            ),
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: <Widget>[
+                _buildModalityChip('ALL', i18n.tr('mod_all'), Icons.apps_rounded),
+                _buildModalityChip(
+                  'IN_PERSON',
+                  i18n.tr('mod_in_person'),
+                  Icons.location_city_outlined,
+                ),
+                _buildModalityChip(
+                  'VIRTUAL',
+                  i18n.tr('mod_virtual'),
+                  Icons.laptop_mac_outlined,
+                ),
+              ],
+            ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // Chips horizontales de categorías extraídas dinámicamente de la respuesta API
+          // Pills horizontales de categorías (rounded-full)
           SizedBox(
-            height: 38,
+            height: 40,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: displayCategories.length,
@@ -549,13 +593,13 @@ class _CatalogScreenState extends State<CatalogScreen> {
               itemBuilder: (BuildContext ctx, int index) {
                 final String cat = displayCategories[index];
                 final bool isSelected = cat == _filter.category;
-                final bool isForYou = cat == 'Para ti';
+                final bool isForYouChip = cat == 'Para ti';
                 return ChoiceChip(
-                  avatar: isForYou
+                  avatar: isForYouChip
                       ? Icon(
                           Icons.auto_awesome_rounded,
                           size: 14,
-                          color: isSelected ? Colors.amberAccent : AppColors.primaryVioletLight,
+                          color: isSelected ? Colors.white : accent,
                         )
                       : null,
                   label: Text(i18n.translateCategory(cat)),
@@ -566,27 +610,19 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     });
                     _loadCatalog();
                   },
-                  selectedColor: AppColors.primaryViolet,
-                  backgroundColor: isDark
-                      ? AppColors.darkSurface
-                      : AppColors.lightSurface,
-                  labelStyle: TextStyle(
+                  selectedColor: accent,
+                  backgroundColor: AppColors.card(isDark),
+                  labelStyle: AppTypography.sans(
                     fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                     color: isSelected
                         ? Colors.white
-                        : (isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.lightTextSecondary),
+                        : AppColors.textSecondary(isDark),
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(999),
                     side: BorderSide(
-                      color: isSelected
-                          ? AppColors.primaryViolet
-                          : (isDark
-                                ? AppColors.darkBorder
-                                : AppColors.lightBorder),
+                      color: isSelected ? accent : AppColors.border(isDark),
                     ),
                   ),
                   showCheckmark: false,
@@ -595,32 +631,32 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
           ),
 
-          if (_filter.category == 'Para ti' && userInterests.isNotEmpty) ...[
+          if (_filter.category == 'Para ti' && userInterests.isNotEmpty) ...<Widget>[
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
               decoration: BoxDecoration(
-                color: AppColors.primaryViolet.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.accentSoft(isDark),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: AppColors.primaryViolet.withValues(alpha: 0.22),
+                  color: accent.withValues(alpha: 0.35),
                 ),
               ),
               child: Row(
-                children: [
-                  const Icon(
+                children: <Widget>[
+                  Icon(
                     Icons.auto_awesome_rounded,
                     size: 16,
-                    color: AppColors.primaryVioletLight,
+                    color: accent,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       '${i18n.tr('for_you_banner_prefix')} (${userInterests.map((t) => i18n.translateCategory(t)).join(', ')})',
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.primaryViolet,
+                        color: AppColors.textPrimary(isDark),
                       ),
                     ),
                   ),
@@ -629,7 +665,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
           ],
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           if (_service.totalPages > 1)
             Row(
@@ -644,7 +680,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
                         },
                   icon: const Icon(Icons.chevron_left),
                 ),
-                Text('${_filter.page} / ${_service.totalPages}'),
+                Text(
+                  '${_filter.page} / ${_service.totalPages}',
+                  style: AppTypography.sans(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary(isDark),
+                  ),
+                ),
                 IconButton(
                   onPressed: _isLoading || _filter.page >= _service.totalPages
                       ? null
@@ -656,48 +699,45 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 ),
               ],
             ),
-          // Cabecera de resultados
+
+          // Cabecera editorial de resultados
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text(
                 '${i18n.tr('available_events')} ($resultCount)',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: isDark
-                      ? AppColors.darkTextPrimary
-                      : AppColors.lightTextPrimary,
+                style: AppTypography.editorial(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary(isDark),
                 ),
               ),
               IconButton(
                 onPressed: _loadCatalog,
                 tooltip: i18n.tr('btn_retry'),
-                icon: const Icon(
+                icon: Icon(
                   Icons.refresh_rounded,
-                  size: 18,
-                  color: AppColors.primaryVioletLight,
+                  size: 19,
+                  color: accent,
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
           if (_isLoading)
-            const Center(
+            Center(
               child: Padding(
-                padding: EdgeInsets.all(40),
-                child: CircularProgressIndicator(
-                  color: AppColors.primaryViolet,
-                ),
+                padding: const EdgeInsets.all(40),
+                child: CircularProgressIndicator(color: accent),
               ),
             )
           else if (_errorMessage != null)
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                color: AppColors.card(isDark),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: AppColors.roseDanger.withValues(alpha: 0.4),
@@ -705,25 +745,26 @@ class _CatalogScreenState extends State<CatalogScreen> {
               ),
               child: Column(
                 children: <Widget>[
-                  const Icon(
+                  Icon(
                     Icons.cloud_off_rounded,
                     size: 40,
-                    color: AppColors.roseDanger,
+                    color: AppColors.dangerText(isDark),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     _errorMessage!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: AppTypography.sans(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary(isDark),
                     ),
                   ),
                   const SizedBox(height: 14),
                   FilledButton.icon(
                     onPressed: _loadCatalog,
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primaryViolet,
+                      backgroundColor: accent,
                       foregroundColor: Colors.white,
                     ),
                     icon: const Icon(Icons.refresh_rounded, size: 17),
@@ -736,40 +777,43 @@ class _CatalogScreenState extends State<CatalogScreen> {
             Container(
               padding: const EdgeInsets.all(36),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                color: AppColors.card(isDark),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                ),
+                border: Border.all(color: AppColors.border(isDark)),
               ),
               child: Column(
                 children: <Widget>[
-                  Icon(
-                    Icons.search_off_rounded,
-                    size: 44,
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    i18n.tr('no_events_title'),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentSoft(isDark),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(
+                      Icons.search_off_rounded,
+                      size: 32,
+                      color: accent,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 14),
+                  Text(
+                    i18n.tr('no_events_title'),
+                    style: AppTypography.editorial(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                      color: AppColors.textPrimary(isDark),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
                   Text(
                     isForYou
                         ? i18n.tr('no_for_you_events_subtitle')
                         : i18n.tr('no_events_subtitle'),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
+                    style: AppTypography.sans(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary(isDark),
                     ),
                   ),
                 ],
@@ -826,17 +870,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
         _loadCatalog();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primaryViolet
-              : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+          color: isSelected ? AppColors.card(isDark) : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primaryViolet
-                : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
-          ),
+          border: isSelected
+              ? Border.all(color: AppColors.border(isDark))
+              : null,
+          boxShadow: isSelected ? AppColors.cardShadow(isDark) : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -845,22 +886,18 @@ class _CatalogScreenState extends State<CatalogScreen> {
               icon,
               size: 14,
               color: isSelected
-                  ? Colors.white
-                  : (isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary),
+                  ? AppColors.accent(isDark)
+                  : AppColors.textSecondary(isDark),
             ),
-            const SizedBox(width: 5),
+            const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+              style: AppTypography.sans(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                 color: isSelected
-                    ? Colors.white
-                    : (isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary),
+                    ? AppColors.textPrimary(isDark)
+                    : AppColors.textSecondary(isDark),
               ),
             ),
           ],

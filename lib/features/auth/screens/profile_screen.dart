@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/network/http_client.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../experience/services/experience_service.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -262,21 +263,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final AppLocalizations i18n = widget.i18n;
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color accent = AppColors.accent(isDark);
 
     if (_isLoading && _user == null) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primaryViolet),
+      return Center(
+        child: CircularProgressIndicator(color: accent),
       );
     }
 
     return ListView(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       children: <Widget>[
         if (_errorMessage != null) ...<Widget>[
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.roseDanger.withValues(alpha: 0.12),
+              color: AppColors.dangerBg(isDark),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: AppColors.roseDanger.withValues(alpha: 0.4),
@@ -284,18 +286,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             child: Row(
               children: <Widget>[
-                const Icon(
+                Icon(
                   Icons.cloud_off_rounded,
-                  color: AppColors.roseDanger,
+                  color: AppColors.dangerText(isDark),
                   size: 18,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(
+                    style: AppTypography.sans(
                       fontSize: 12,
-                      color: AppColors.roseDanger,
+                      color: AppColors.dangerText(isDark),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -303,27 +305,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 IconButton(
                   onPressed: _loadProfile,
                   tooltip: i18n.tr('btn_retry'),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.refresh_rounded,
-                    color: AppColors.roseDanger,
+                    color: AppColors.dangerText(isDark),
                     size: 18,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
         ],
 
         // Formulario principal de Perfil sin valores harcodeados
         Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+            color: AppColors.card(isDark),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-            ),
+            border: Border.all(color: AppColors.border(isDark)),
+            boxShadow: AppColors.cardShadow(isDark),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,6 +337,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: i18n.tr('label_firstname'),
                       controller: _firstNameController,
                       hint: i18n.tr('hint_firstname'),
+                      isDark: isDark,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -344,6 +346,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: i18n.tr('label_lastname'),
                       controller: _lastNameController,
                       hint: i18n.tr('hint_lastname'),
+                      isDark: isDark,
                     ),
                   ),
                 ],
@@ -358,6 +361,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: i18n.tr('label_city'),
                       controller: _cityController,
                       hint: i18n.tr('hint_city'),
+                      isDark: isDark,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -366,6 +370,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: i18n.tr('label_zone'),
                       controller: _zoneController,
                       hint: i18n.tr('hint_zone'),
+                      isDark: isDark,
                     ),
                   ),
                 ],
@@ -380,6 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: i18n.tr('label_phone'),
                       controller: _phoneController,
                       hint: i18n.tr('hint_phone'),
+                      isDark: isDark,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -388,6 +394,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: i18n.tr('label_email'),
                       controller: _emailController,
                       hint: i18n.tr('hint_email'),
+                      isDark: isDark,
                     ),
                   ),
                 ],
@@ -397,9 +404,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Biografía
               Text(
                 i18n.tr('label_bio'),
-                style: const TextStyle(
+                style: AppTypography.sans(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary(isDark),
                 ),
               ),
               const SizedBox(height: 6),
@@ -409,9 +417,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(hintText: i18n.tr('hint_bio')),
               ),
 
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 18),
-                child: Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Divider(
+                  height: 1,
+                  color: AppColors.border(isDark),
+                ),
               ),
 
               // Sección Intereses y preferencias estandarizados para matching
@@ -420,27 +431,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: <Widget>[
                   Text(
                     i18n.tr('interests_title'),
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
+                    style: AppTypography.editorial(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary(isDark),
                     ),
                   ),
                   if (_selectedInterests.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
+                        horizontal: 10,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryViolet.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
+                        color: AppColors.accentSoft(isDark),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: accent.withValues(alpha: 0.35),
+                        ),
                       ),
                       child: Text(
                         '${_selectedInterests.length} ${i18n.tr('active')}',
-                        style: const TextStyle(
+                        style: AppTypography.sans(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.primaryViolet,
+                          color: accent,
                         ),
                       ),
                     ),
@@ -449,17 +464,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 4),
               Text(
                 i18n.tr('interests_subtitle'),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
+                style: AppTypography.sans(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textSecondary(isDark),
                 ),
               ),
               const SizedBox(height: 14),
 
               // Chips de temas disponibles (por defecto + categorías backend + intereses activos)
-              // Al tocarlos se agregan o quitan al instante sin necesidad de escribir texto directamente.
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -469,54 +482,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     label: Text(i18n.translateCategory(topic)),
                     selected: isSelected,
                     onSelected: (_) => _toggleInterest(topic),
-                    selectedColor: AppColors.primaryViolet,
+                    selectedColor: accent,
                     checkmarkColor: Colors.white,
-                    backgroundColor: isDark
-                        ? AppColors.darkSurfaceElevated
-                        : Colors.grey.shade100,
+                    backgroundColor: AppColors.surfaceSoft(isDark),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(999),
                       side: BorderSide(
-                        color: isSelected
-                            ? AppColors.primaryViolet
-                            : (isDark
-                                ? AppColors.darkBorder
-                                : AppColors.lightBorder),
+                        color: isSelected ? accent : AppColors.border(isDark),
                       ),
                     ),
-                    labelStyle: TextStyle(
+                    labelStyle: AppTypography.sans(
                       fontSize: 12,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected
                           ? Colors.white
-                          : (isDark
-                              ? AppColors.darkTextPrimary
-                              : AppColors.lightTextPrimary),
+                          : AppColors.textPrimary(isDark),
                     ),
                     showCheckmark: true,
                     avatar: isSelected
                         ? null
-                        : const Icon(
+                        : Icon(
                             Icons.add_rounded,
                             size: 15,
-                            color: AppColors.primaryViolet,
+                            color: accent,
                           ),
                   );
                 }).toList(),
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
 
               // Campo secundario opcional para agregar un interés personalizado
               Text(
                 i18n.tr('interests_custom_title'),
-                style: TextStyle(
+                style: AppTypography.sans(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
+                  color: AppColors.textSecondary(isDark),
                 ),
               ),
               const SizedBox(height: 8),
@@ -540,15 +543,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onPressed: _addCustomInterest,
                     tooltip: i18n.tr('hint_add_interest'),
                     style: IconButton.styleFrom(
-                      backgroundColor: AppColors.primaryViolet,
+                      backgroundColor: accent,
                       foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     icon: const Icon(Icons.add_rounded),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
               // Botón Guardar cambios y Cerrar sesión
               Row(
@@ -556,15 +562,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: <Widget>[
                   TextButton.icon(
                     onPressed: widget.onLogout,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.logout_rounded,
                       size: 17,
-                      color: AppColors.roseDanger,
+                      color: AppColors.dangerText(isDark),
                     ),
                     label: Text(
                       i18n.tr('btn_logout'),
-                      style: const TextStyle(
-                        color: AppColors.roseDanger,
+                      style: AppTypography.sans(
+                        color: AppColors.dangerText(isDark),
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
                       ),
@@ -573,14 +579,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   FilledButton.icon(
                     onPressed: _isSaving ? null : _onSaveProfilePressed,
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primaryViolet,
+                      backgroundColor: accent,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 13,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     icon: _isSaving
@@ -595,9 +601,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : const Icon(Icons.check_rounded, size: 18),
                     label: Text(
                       i18n.tr('btn_save_changes'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
+                      style: AppTypography.sans(
+                        fontWeight: FontWeight.w700,
                         fontSize: 13.5,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -615,13 +622,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String label,
     required TextEditingController controller,
     required String hint,
+    required bool isDark,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
           label,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          style: AppTypography.sans(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary(isDark),
+          ),
         ),
         const SizedBox(height: 6),
         TextField(

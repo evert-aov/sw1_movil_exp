@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/network/http_client.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../booking/screens/checkout_screen.dart';
 import '../models/matching_model.dart';
 import '../services/matching_service.dart';
@@ -185,8 +186,8 @@ class _MatchingScreenState extends State<MatchingScreen> {
     switch (status.toUpperCase()) {
       case 'OPEN':
         label = 'ABIERTO';
-        color = AppColors.primaryVioletLight;
-        bg = isDark ? const Color(0xFF221538) : AppColors.primaryVioletSoft;
+        color = AppColors.accent(isDark);
+        bg = AppColors.accentSoft(isDark);
         break;
       case 'REACHED':
       case 'CONFIRMED':
@@ -196,8 +197,8 @@ class _MatchingScreenState extends State<MatchingScreen> {
         break;
       case 'EXPIRED':
         label = 'EXPIRADO';
-        color = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-        bg = isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9);
+        color = AppColors.textSecondary(isDark);
+        bg = AppColors.surfaceSoft(isDark);
         break;
       default:
         label = status.toUpperCase();
@@ -209,16 +210,16 @@ class _MatchingScreenState extends State<MatchingScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
         label,
-        style: TextStyle(
+        style: AppTypography.sans(
           color: color,
           fontSize: 11,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.6,
         ),
       ),
     );
@@ -227,58 +228,64 @@ class _MatchingScreenState extends State<MatchingScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryText = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final secondaryText = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
-    final cardBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
-    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final primaryText = AppColors.textPrimary(isDark);
+    final secondaryText = AppColors.textSecondary(isDark);
+    final cardBg = AppColors.card(isDark);
+    final borderColor = AppColors.border(isDark);
+    final accent = AppColors.accent(isDark);
     final group = _group;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
           i18n.tr('matching_title'),
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: AppTypography.editorial(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: primaryText,
+          ),
         ),
         elevation: 0,
       ),
       body: Column(
         children: [
           if (_busy)
-            const LinearProgressIndicator(
+            LinearProgressIndicator(
               minHeight: 3,
               backgroundColor: Colors.transparent,
-              color: AppColors.primaryViolet,
+              color: accent,
             ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               children: [
                 // Banner explicativo superior
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryViolet.withValues(alpha: 0.08),
+                    color: AppColors.accentSoft(isDark),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: AppColors.primaryViolet.withValues(alpha: 0.2),
+                      color: accent.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.groups_rounded,
-                        color: AppColors.primaryViolet,
+                        color: accent,
                         size: 22,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           i18n.tr('matching_banner_desc'),
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             fontSize: 12.5,
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.primaryViolet,
-                            height: 1.4,
+                            fontWeight: FontWeight.w500,
+                            color: primaryText,
+                            height: 1.45,
                           ),
                         ),
                       ),
@@ -291,7 +298,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.roseDanger.withValues(alpha: 0.1),
+                      color: AppColors.dangerBg(isDark),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: AppColors.roseDanger.withValues(alpha: 0.35),
@@ -299,15 +306,19 @@ class _MatchingScreenState extends State<MatchingScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline_rounded, color: AppColors.roseDanger, size: 20),
+                        Icon(
+                          Icons.error_outline_rounded,
+                          color: AppColors.dangerText(isDark),
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _error!,
-                            style: const TextStyle(
-                              color: AppColors.roseDanger,
+                            style: AppTypography.sans(
+                              color: AppColors.dangerText(isDark),
                               fontSize: 12.5,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -318,7 +329,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
 
                 const SizedBox(height: 18),
 
-                // Tarjeta de estado del grupo (si ya existe o si el usuario pertenece)
+                // Tarjeta de estado del grupo
                 if (group != null) ...[
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -326,15 +337,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
                       color: cardBg,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: borderColor),
-                      boxShadow: isDark
-                          ? null
-                          : [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                      boxShadow: AppColors.cardShadow(isDark),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,19 +347,19 @@ class _MatchingScreenState extends State<MatchingScreen> {
                           children: [
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.hub_outlined,
                                   size: 20,
-                                  color: AppColors.primaryViolet,
+                                  color: accent,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   group.hasJoined
                                       ? i18n.tr('matching_your_group')
                                       : i18n.tr('matching_forming_group'),
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                  style: AppTypography.editorial(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
                                     color: primaryText,
                                   ),
                                 ),
@@ -374,13 +377,16 @@ class _MatchingScreenState extends State<MatchingScreen> {
                           children: [
                             Text(
                               i18n.tr('matching_members_label'),
-                              style: TextStyle(fontSize: 13, color: secondaryText),
+                              style: AppTypography.sans(
+                                fontSize: 13,
+                                color: secondaryText,
+                              ),
                             ),
                             Text(
                               '${group.currentMembers} / ${group.targetQuorum}',
-                              style: TextStyle(
+                              style: AppTypography.sans(
                                 fontSize: 15,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w800,
                                 color: primaryText,
                               ),
                             ),
@@ -394,8 +400,8 @@ class _MatchingScreenState extends State<MatchingScreen> {
                           child: LinearProgressIndicator(
                             value: (group.currentMembers / (group.targetQuorum > 0 ? group.targetQuorum : 1)).clamp(0.0, 1.0),
                             minHeight: 6,
-                            backgroundColor: isDark ? AppColors.darkSurfaceElevated : Colors.grey.shade200,
-                            color: AppColors.primaryViolet,
+                            backgroundColor: AppColors.surfaceSoft(isDark),
+                            color: accent,
                           ),
                         ),
 
@@ -406,20 +412,23 @@ class _MatchingScreenState extends State<MatchingScreen> {
                             children: [
                               Text(
                                 'Afinidad temática estimada',
-                                style: TextStyle(fontSize: 13, color: secondaryText),
+                                style: AppTypography.sans(
+                                  fontSize: 13,
+                                  color: secondaryText,
+                                ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: AppColors.emeraldSuccess.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
+                                  color: isDark ? AppColors.emeraldBgDark : AppColors.emeraldBgLight,
+                                  borderRadius: BorderRadius.circular(999),
                                 ),
                                 child: Text(
                                   '${(group.affinityScore * 100).toStringAsFixed(0)}% afín',
-                                  style: const TextStyle(
+                                  style: AppTypography.sans(
                                     fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.emeraldSuccess,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? AppColors.emeraldTextDark : AppColors.emeraldTextLight,
                                   ),
                                 ),
                               ),
@@ -434,13 +443,16 @@ class _MatchingScreenState extends State<MatchingScreen> {
                           children: [
                             Text(
                               'Cupos pagados confirmados',
-                              style: TextStyle(fontSize: 13, color: secondaryText),
+                              style: AppTypography.sans(
+                                fontSize: 13,
+                                color: secondaryText,
+                              ),
                             ),
                             Text(
                               '${group.paidSlots} cupos',
-                              style: TextStyle(
+                              style: AppTypography.sans(
                                 fontSize: 13,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w700,
                                 color: primaryText,
                               ),
                             ),
@@ -453,10 +465,12 @@ class _MatchingScreenState extends State<MatchingScreen> {
                           group.experienceConfirmed
                               ? 'Evento confirmado por quórum pagado'
                               : 'Pendiente de confirmación económica por quórum',
-                          style: TextStyle(
+                          style: AppTypography.sans(
                             fontSize: 11.5,
-                            color: group.experienceConfirmed ? AppColors.emeraldSuccess : AppColors.amberWarning,
-                            fontWeight: FontWeight.w500,
+                            color: group.experienceConfirmed
+                                ? (isDark ? AppColors.emeraldTextDark : AppColors.emeraldTextLight)
+                                : (isDark ? AppColors.amberTextDark : AppColors.amberTextLight),
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
 
@@ -466,10 +480,14 @@ class _MatchingScreenState extends State<MatchingScreen> {
                             width: double.infinity,
                             child: OutlinedButton.icon(
                               onPressed: _busy ? null : _leave,
-                              icon: const Icon(Icons.exit_to_app_rounded, size: 16, color: AppColors.roseDanger),
+                              icon: Icon(
+                                Icons.exit_to_app_rounded,
+                                size: 16,
+                                color: AppColors.dangerText(isDark),
+                              ),
                               label: Text(
                                 i18n.tr('matching_leave_btn'),
-                                style: const TextStyle(color: AppColors.roseDanger),
+                                style: TextStyle(color: AppColors.dangerText(isDark)),
                               ),
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(color: AppColors.roseDanger.withValues(alpha: 0.4)),
@@ -488,18 +506,21 @@ class _MatchingScreenState extends State<MatchingScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurfaceElevated : AppColors.lightSurfaceElevated,
+                      color: AppColors.surfaceSoft(isDark),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: borderColor),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline_rounded, color: AppColors.primaryVioletLight, size: 20),
+                        Icon(Icons.info_outline_rounded, color: accent, size: 20),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             i18n.tr('matching_no_group_yet'),
-                            style: TextStyle(fontSize: 12.5, color: secondaryText),
+                            style: AppTypography.sans(
+                              fontSize: 12.5,
+                              color: secondaryText,
+                            ),
                           ),
                         ),
                       ],
@@ -508,7 +529,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
                   const SizedBox(height: 18),
                 ],
 
-                // Formulario de postulación (solo si aún no se ha unido al grupo)
+                // Formulario de postulación
                 if (_group?.hasJoined != true) ...[
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -516,29 +537,16 @@ class _MatchingScreenState extends State<MatchingScreen> {
                       color: cardBg,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: borderColor),
-                      boxShadow: isDark
-                          ? null
-                          : [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                      boxShadow: AppColors.cardShadow(isDark),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          i18n.tr('matching_form_kicker'),
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                            color: secondaryText,
-                          ),
+                          i18n.tr('matching_form_kicker').toUpperCase(),
+                          style: AppTypography.eyebrow(isDark),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
 
                         TextField(
                           controller: _from,
@@ -590,9 +598,9 @@ class _MatchingScreenState extends State<MatchingScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
 
-                        // Selección rápida de zonas sugeridas con un toque sin escribir
+                        // Selección rápida de zonas sugeridas (rounded-full)
                         Wrap(
                           spacing: 6,
                           runSpacing: 6,
@@ -607,36 +615,30 @@ class _MatchingScreenState extends State<MatchingScreen> {
                                   _zone.text = selected ? z : '';
                                 });
                               },
-                              selectedColor: AppColors.primaryViolet,
-                              backgroundColor: isDark
-                                  ? AppColors.darkSurfaceElevated
-                                  : Colors.grey.shade100,
-                              labelStyle: TextStyle(
+                              selectedColor: accent,
+                              backgroundColor: AppColors.surfaceSoft(isDark),
+                              labelStyle: AppTypography.sans(
                                 fontSize: 11.5,
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                color: isSelected
-                                    ? Colors.white
-                                    : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
+                                color: isSelected ? Colors.white : primaryText,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(999),
                                 side: BorderSide(
-                                  color: isSelected
-                                      ? AppColors.primaryViolet
-                                      : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                                  color: isSelected ? accent : borderColor,
                                 ),
                               ),
                               showCheckmark: false,
                               avatar: Icon(
                                 isSelected ? Icons.check_circle_rounded : Icons.place_outlined,
                                 size: 14,
-                                color: isSelected ? Colors.white : AppColors.primaryViolet,
+                                color: isSelected ? Colors.white : accent,
                               ),
                             );
                           }).toList(),
                         ),
 
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 20),
 
                         SizedBox(
                           width: double.infinity,
@@ -645,13 +647,17 @@ class _MatchingScreenState extends State<MatchingScreen> {
                             icon: const Icon(Icons.group_add_rounded, size: 20),
                             label: Text(
                               i18n.tr('matching_apply_btn'),
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
+                              style: AppTypography.sans(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14.5,
+                                color: Colors.white,
+                              ),
                             ),
                             style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.primaryViolet,
+                              backgroundColor: accent,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
                           ),
                         ),
@@ -661,7 +667,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
                   const SizedBox(height: 16),
                 ],
 
-                // Botones de acción inferiores con espaciado adecuado
+                // Botones de acción inferiores
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -671,7 +677,7 @@ class _MatchingScreenState extends State<MatchingScreen> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       side: BorderSide(color: borderColor),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
@@ -687,14 +693,19 @@ class _MatchingScreenState extends State<MatchingScreen> {
                         builder: (_) => CheckoutScreen(experienceId: widget.experienceId, i18n: i18n),
                       ),
                     ),
-                    icon: const Icon(Icons.confirmation_number_outlined, size: 18),
+                    icon: Icon(Icons.confirmation_number_outlined, size: 18, color: accent),
                     label: Text(
                       i18n.tr('matching_direct_checkout_btn'),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: AppTypography.sans(
+                        fontWeight: FontWeight.w700,
+                        color: accent,
+                      ),
                     ),
                     style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.accentSoft(isDark),
+                      foregroundColor: accent,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),

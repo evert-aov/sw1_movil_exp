@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/network/http_client.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../models/auth_credentials_model.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -85,6 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final AppLocalizations i18n = widget.i18n;
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color accent = AppColors.accent(isDark);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,7 +95,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.roseDanger.withValues(alpha: 0.12),
+              color: AppColors.dangerBg(isDark),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: AppColors.roseDanger.withValues(alpha: 0.4),
@@ -101,18 +103,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             child: Row(
               children: <Widget>[
-                const Icon(
+                Icon(
                   Icons.error_outline_rounded,
-                  color: AppColors.roseDanger,
+                  color: AppColors.dangerText(isDark),
                   size: 18,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(
+                    style: AppTypography.sans(
                       fontSize: 12,
-                      color: AppColors.roseDanger,
+                      color: AppColors.dangerText(isDark),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -125,7 +127,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         Text(
           i18n.tr('label_fullname'),
-          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+          style: AppTypography.sans(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary(isDark),
+          ),
         ),
         const SizedBox(height: 6),
         TextField(
@@ -139,7 +145,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         Text(
           i18n.tr('label_email'),
-          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+          style: AppTypography.sans(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary(isDark),
+          ),
         ),
         const SizedBox(height: 6),
         TextField(
@@ -154,7 +164,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         Text(
           i18n.tr('label_password'),
-          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+          style: AppTypography.sans(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary(isDark),
+          ),
         ),
         const SizedBox(height: 6),
         TextField(
@@ -174,16 +188,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined,
                 size: 16,
-                color: AppColors.primaryVioletLight,
+                color: accent,
               ),
               label: Text(
                 _obscurePassword
                     ? i18n.tr('show_password')
                     : i18n.tr('hide_password'),
-                style: const TextStyle(
+                style: AppTypography.sans(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primaryVioletLight,
+                  color: accent,
                 ),
               ),
             ),
@@ -196,15 +210,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+            color: AppColors.accentSoft(isDark),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.primaryVioletLight, width: 1.5),
+            border: Border.all(
+              color: accent.withValues(alpha: 0.45),
+              width: 1.2,
+            ),
           ),
           child: Row(
             children: <Widget>[
-              const Icon(
+              Icon(
                 Icons.explore_outlined,
-                color: AppColors.primaryVioletLight,
+                color: accent,
                 size: 22,
               ),
               const SizedBox(width: 12),
@@ -214,45 +231,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   children: <Widget>[
                     Text(
                       i18n.tr('attendee_role_title'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
+                      style: AppTypography.sans(
+                        fontWeight: FontWeight.w700,
                         fontSize: 13,
+                        color: AppColors.textPrimary(isDark),
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       i18n.tr('attendee_role_desc'),
-                      style: TextStyle(
+                      style: AppTypography.sans(
                         fontSize: 11.5,
-                        color: isDark
-                            ? AppColors.darkTextSecondary
-                            : AppColors.lightTextSecondary,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textSecondary(isDark),
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.check_circle_rounded,
-                color: AppColors.primaryVioletLight,
+                color: accent,
                 size: 20,
               ),
             ],
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
 
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
             onPressed: _isSubmitting ? null : _onRegisterSubmitted,
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primaryViolet,
+              backgroundColor: accent,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
             icon: _isSubmitting
@@ -267,9 +284,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 : const Icon(Icons.arrow_forward_rounded, size: 18),
             label: Text(
               i18n.tr('btn_register'),
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
+              style: AppTypography.sans(
+                fontWeight: FontWeight.w700,
                 fontSize: 14,
+                letterSpacing: 0.4,
+                color: Colors.white,
               ),
             ),
           ),
@@ -280,11 +299,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Text(
             i18n.tr('terms_footer'),
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: AppTypography.sans(
               fontSize: 11,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textSecondary(isDark),
             ),
           ),
         ),

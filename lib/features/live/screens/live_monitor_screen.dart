@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/network/http_client.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../live_monitor_strings.dart';
 import '../models/live_telemetry_model.dart';
 import '../services/live_telemetry_service.dart';
@@ -141,56 +142,102 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
 
   Widget _buildPairForm(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Color accent = AppColors.accent(isDark);
+
     return ListView(
       padding: const EdgeInsets.all(24),
       children: <Widget>[
-        const Icon(
-          Icons.monitor_heart_outlined,
-          size: 48,
-          color: AppColors.primaryViolet,
-        ),
-        const SizedBox(height: 16),
-        Text(
-          _t.tr('pair_title'),
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.card(isDark),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border(isDark)),
+            boxShadow: AppColors.cardShadow(isDark),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(_t.tr('pair_description'), style: theme.textTheme.bodyMedium),
-        const SizedBox(height: 24),
-        TextField(
-          key: const Key('monitor-code-field'),
-          controller: _codeController,
-          textCapitalization: TextCapitalization.characters,
-          maxLength: 6,
-          autocorrect: false,
-          enableSuggestions: false,
-          inputFormatters: <TextInputFormatter>[
-            FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-            TextInputFormatter.withFunction(
-              (TextEditingValue _, TextEditingValue next) =>
-                  next.copyWith(text: next.text.toUpperCase()),
-            ),
-          ],
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 8,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentSoft(isDark),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    Icons.monitor_heart_outlined,
+                    size: 36,
+                    color: accent,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                _t.tr('pair_title'),
+                textAlign: TextAlign.center,
+                style: AppTypography.editorial(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary(isDark),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _t.tr('pair_description'),
+                textAlign: TextAlign.center,
+                style: AppTypography.sans(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textSecondary(isDark),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                key: const Key('monitor-code-field'),
+                controller: _codeController,
+                textCapitalization: TextCapitalization.characters,
+                maxLength: 6,
+                autocorrect: false,
+                enableSuggestions: false,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                  TextInputFormatter.withFunction(
+                    (TextEditingValue _, TextEditingValue next) =>
+                        next.copyWith(text: next.text.toUpperCase()),
+                  ),
+                ],
+                style: AppTypography.sans(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 8,
+                  color: AppColors.textPrimary(isDark),
+                ),
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                  labelText: _t.tr('code_label'),
+                  errorText: _error,
+                ),
+                onSubmitted: (_) => _pair(),
+              ),
+              const SizedBox(height: 14),
+              FilledButton.icon(
+                key: const Key('pair-button'),
+                onPressed: _pairing ? null : _pair,
+                style: FilledButton.styleFrom(
+                  backgroundColor: accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                ),
+                icon: const Icon(Icons.link_rounded),
+                label: Text(
+                  _pairing ? _t.tr('pairing') : _t.tr('pair_button'),
+                ),
+              ),
+            ],
           ),
-          textAlign: TextAlign.center,
-          decoration: InputDecoration(
-            labelText: _t.tr('code_label'),
-            errorText: _error,
-          ),
-          onSubmitted: (_) => _pair(),
-        ),
-        const SizedBox(height: 12),
-        FilledButton.icon(
-          key: const Key('pair-button'),
-          onPressed: _pairing ? null : _pair,
-          icon: const Icon(Icons.link_rounded),
-          label: Text(_pairing ? _t.tr('pairing') : _t.tr('pair_button')),
         ),
       ],
     );
@@ -198,6 +245,8 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
 
   Widget _buildMonitor(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Color accent = AppColors.accent(isDark);
     final LiveTelemetrySnapshot? snapshot = _snapshot;
     final EnergyTrafficLight? light = snapshot?.trafficLight;
     final bool live = snapshot?.signalStatus == TelemetrySignalStatus.live;
@@ -219,9 +268,12 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
           _t.tr('light_${light?.name ?? 'none'}'),
           key: const Key('light-label'),
           textAlign: TextAlign.center,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: light == null ? null : trafficLightColor(light),
+          style: AppTypography.editorial(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: light == null
+                ? AppColors.textPrimary(isDark)
+                : trafficLightColor(light),
           ),
         ),
         if (energy != null) ...<Widget>[
@@ -234,8 +286,10 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
               Text(
                 '${(energy * 100).round()}%',
                 key: const Key('energy-value'),
-                style: theme.textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w900,
+                style: AppTypography.editorial(
+                  fontSize: 40,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary(isDark),
                 ),
               ),
               const SizedBox(width: 12),
@@ -252,29 +306,52 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen> {
             ),
         ],
         const SizedBox(height: 28),
-        Text(_t.tr('pulse'), style: theme.textTheme.labelLarge),
-        const SizedBox(height: 8),
-        if (snapshot != null && snapshot.pulse.isNotEmpty)
-          PulseSparkline(
-            points: snapshot.pulse,
-            windowEnd: snapshot.emittedAt,
-            currentColor: light == null
-                ? AppColors.primaryVioletLight
-                : trafficLightColor(light),
-          )
-        else
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32),
-            child: Text(
-              _t.tr('pulse_empty'),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall,
-            ),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.card(isDark),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border(isDark)),
+            boxShadow: AppColors.cardShadow(isDark),
           ),
-        const SizedBox(height: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                _t.tr('pulse').toUpperCase(),
+                style: AppTypography.eyebrow(isDark),
+              ),
+              const SizedBox(height: 12),
+              if (snapshot != null && snapshot.pulse.isNotEmpty)
+                PulseSparkline(
+                  points: snapshot.pulse,
+                  windowEnd: snapshot.emittedAt,
+                  currentColor: light == null
+                      ? accent
+                      : trafficLightColor(light),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 28),
+                  child: Center(
+                    child: Text(
+                      _t.tr('pulse_empty'),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
         Row(
           children: <Widget>[
-            const Icon(Icons.verified_user_outlined, size: 16),
+            Icon(
+              Icons.verified_user_outlined,
+              size: 16,
+              color: AppColors.textSecondary(isDark),
+            ),
             const SizedBox(width: 6),
             Expanded(
               child: Text(_t.tr('privacy'), style: theme.textTheme.bodySmall),
