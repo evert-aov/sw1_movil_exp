@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/localization/locale_controller.dart';
+import 'core/services/push_notification_service.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
@@ -13,7 +14,9 @@ import 'features/booking/screens/my_tickets_screen.dart';
 import 'features/notifications/notifications_screen.dart';
 
 /// Punto de entrada principal multiplataforma de EXPERIENCIA (Android, iOS, Web, Windows, macOS, Linux).
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await PushNotificationService.instance.initialize();
   runApp(const ExperienciaApp());
 }
 

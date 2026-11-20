@@ -1,5 +1,7 @@
+import 'dart:async';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/http_client.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../models/auth_credentials_model.dart';
 import '../models/user_model.dart';
 
@@ -27,6 +29,14 @@ class AuthService {
       );
     }
     _currentUser = user;
+    final String? jwt = HttpClient.authToken;
+    if (jwt != null && jwt.isNotEmpty) {
+      unawaited(
+        PushNotificationService.instance.registerForAuthenticatedUser(
+          jwtToken: jwt,
+        ),
+      );
+    }
     return user;
   }
 

@@ -5,6 +5,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/http_client.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../models/live_telemetry_model.dart';
 
 /// Fábrica de canales WebSocket inyectable para pruebas.
@@ -89,7 +90,15 @@ class LiveTelemetryService {
     final dynamic response = await _http.post(redeemEndpoint, <String, dynamic>{
       'code': normalized,
     });
-    return MonitorSession.fromJson(response as Map<String, dynamic>);
+    final MonitorSession session = MonitorSession.fromJson(
+      response as Map<String, dynamic>,
+    );
+    unawaited(
+      PushNotificationService.instance.registerForMonitorSession(
+        monitorToken: session.token,
+      ),
+    );
+    return session;
   }
 
   /// Construye la URL `ws://` o `wss://` del canal de telemetría de la [session].
